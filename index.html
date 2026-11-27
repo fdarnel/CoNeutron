@@ -1,3 +1,4 @@
+html
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -50,16 +51,17 @@
   }
   h1 { margin: 0; font-size: 1.65rem; letter-spacing: 0.5px; }
 
-  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
-  button, select, input {
+  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  button, select, input, .btn-link {
     background: var(--panel); color: var(--text); border: 1px solid var(--border);
     padding: 7px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
-    transition: border-color 0.15s, background 0.15s;
+    transition: border-color 0.15s, background 0.15s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px;
   }
   input { cursor: text; }
-  button:hover, select:hover, input:focus { border-color: var(--p1); outline: none; }
-  button.primary { background: #2563eb; border-color: #3b82f6; color: #fff; font-weight: 600; }
-  button.primary:hover { background: #1d4ed8; }
+  button:hover, select:hover, input:focus, .btn-link:hover { border-color: var(--p1); outline: none; }
+  button.primary, .btn-link.primary { background: #2563eb; border-color: #3b82f6; color: #fff; font-weight: 600; }
+  button.primary:hover, .btn-link.primary:hover { background: #1d4ed8; }
   button.share-btn { background: #059669; border-color: #10b981; color: #fff; font-weight: 600; }
   button.share-btn:hover { background: #047857; }
   button:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -104,11 +106,20 @@
   .score-p1 { color: var(--p1); }
   .score-p2 { color: var(--p2); }
 
+  @keyframes turnPulse {
+    0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.65); }
+    70% { box-shadow: 0 0 0 12px rgba(56, 189, 248, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+  }
+
   .status {
     width: 100%; max-width: 860px; background: var(--panel); padding: 11px 16px;
     border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 1rem;
     border-left: 5px solid var(--p1); text-align: center; border-top: 1px solid var(--border);
     border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+  .status.turn-alert {
+    animation: turnPulse 1.1s ease-out 2;
   }
 
   .main-layout {
@@ -198,6 +209,16 @@
     display: flex; justify-content: space-between;
   }
 
+  /* Footer */
+  .site-footer {
+    width: 100%; max-width: 860px; margin-top: 20px; padding: 12px 16px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    text-align: center; font-size: 0.85rem; color: var(--muted);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .site-footer a { color: var(--p1); text-decoration: none; font-weight: 600; }
+  .site-footer a:hover { text-decoration: underline; }
+
   /* Modals */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,0.65);
@@ -206,13 +227,28 @@
   .modal-backdrop.open { display: flex; }
   .modal {
     background: var(--panel); color: var(--text); border: 1px solid var(--border);
-    border-radius: 14px; max-width: 480px; width: 100%; padding: 20px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+    border-radius: 14px; max-width: 500px; width: 100%; padding: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5); max-height: 88vh; overflow-y: auto;
   }
+  .modal.modal-wide { max-width: 660px; }
   .modal h2 { margin-top: 0; font-size: 1.25rem; }
+  .modal h3 { margin: 14px 0 6px; font-size: 1rem; color: var(--p1); }
+  .modal ul { margin: 6px 0; padding-left: 20px; line-height: 1.5; font-size: 0.92rem; }
+  .modal p { line-height: 1.5; font-size: 0.93rem; }
+  .strat-table {
+    width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.85rem;
+  }
+  .strat-table th, .strat-table td {
+    border: 1px solid var(--border); padding: 6px 8px; text-align: left;
+  }
+  .strat-table th { background: var(--panel-alt); }
+  .strat-tip {
+    background: var(--panel-alt); border-left: 4px solid var(--neutron);
+    padding: 8px 12px; border-radius: 6px; font-size: 0.88rem; margin: 10px 0;
+  }
   .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
   .form-group label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
   pre.sql-box {
     background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px;
     font-size: 0.75rem; overflow-x: auto; user-select: all;
@@ -235,7 +271,9 @@
     <button id="themeBtn" onclick="toggleTheme()" title="Changer de thème (T)">☀️ Thème</button>
     <button onclick="toggleFullscreen()" title="Plein écran (F)">⛶ Plein Écran</button>
     <button onclick="openModal('rulesModal')" title="Règles du jeu (H)">📖 Règles</button>
+    <button onclick="openModal('strategyModal')" title="Guide stratégique (S)">🎓 Stratégie</button>
     <button onclick="openModal('cloudModal')">⚙️ Config Cloud</button>
+    <button onclick="switchLanguage('index_en.html')" title="Switch to English">🇬🇧 EN</button>
   </div>
 </header>
 
@@ -258,7 +296,7 @@
   </select>
 
   <button id="undoBtn" onclick="undoMove()" title="Annuler le dernier tour (Z)">↩ Annuler</button>
-  <button class="primary" onclick="initGame()" title="Nouvelle partie (N)">Nouvelle Partie</button>
+  <button id="newGameBtn" class="primary" onclick="handleNewGameClick()" title="Nouvelle partie (N)">Nouvelle Partie</button>
 </div>
 
 <div class="online-panel" id="onlinePanel">
@@ -302,11 +340,21 @@
   <div class="history-panel">
     <div class="history-header">
       <span>Historique des coups</span>
-      <span id="turnCounter" style="color: var(--muted); font-weight: 500;">Tour 1</span>
+      <span id="turnCounter" style="color: var(--muted); font-weight: 500;">Coup 1</span>
     </div>
     <div class="history-list" id="historyList"></div>
   </div>
 </div>
+
+<footer class="site-footer">
+  <div>
+    <strong>CoNeutron</strong> — Créé par <strong>Mark Owen</strong> et <strong>Julian Richardson</strong> •
+    <a href="https://www.solipsys.co.uk/new/CoNeutron.html" target="_blank" rel="noopener noreferrer">Site officiel de présentation</a>
+  </div>
+  <div>
+    <a href="Guide_Strategique_CoNeutron.pdf" download>📥 Télécharger le Guide Stratégique (PDF)</a>
+  </div>
+</footer>
 
 <!-- Modal Règles -->
 <div class="modal-backdrop" id="rulesModal" onclick="if(event.target===this)closeModal('rulesModal')">
@@ -318,7 +366,52 @@
     <p><strong>4. Exception du 1er tour :</strong> Au tout premier tour de la partie, le joueur Bleu déplace uniquement un pion bleu (sans bouger le Neutron).</p>
     <p><strong>5. Blocage :</strong> Si un joueur ne peut pas déplacer le Neutron ou aucun de ses pions lors de son tour, il perd la partie.</p>
     <div class="modal-actions">
+      <button onclick="closeModal('rulesModal');openModal('strategyModal')">🎓 Voir la stratégie</button>
       <button class="primary" onclick="closeModal('rulesModal')">Compris</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Stratégie -->
+<div class="modal-backdrop" id="strategyModal" onclick="if(event.target===this)closeModal('strategyModal')">
+  <div class="modal modal-wide">
+    <h2>🎓 Guide Stratégique : Maîtriser CoNeutron</h2>
+    <p>Contrairement au <em>Neutron</em> classique, vous devez propulser le Neutron sur la <strong>rangée de départ adverse</strong> (ligne 5 pour les Bleus, ligne 1 pour les Rouges).</p>
+
+    <h3>1. Les 3 Principes Fondamentaux</h3>
+    <ul>
+      <li><strong>Ouvrir au lieu de murer :</strong> Ne créez pas un « mur » devant la ligne adverse. Gardez des <strong>couloirs ouverts</strong> (colonnes ou diagonales dégagées) pointant vers la rangée cible.</li>
+      <li><strong>Contrôle du centre (C3) :</strong> En C3, le Neutron a 8 directions. Sur un bord (A ou E), il en perd 3. Contrôler <strong>B3, C3, D3, C2, C4</strong> permet d'orienter le jeu.</li>
+      <li><strong>L'asphyxie (blocage) :</strong> Encercler le Neutron tout en gardant un pion arrière libre est souvent plus sûr qu'une attaque frontale.</li>
+    </ul>
+
+    <h3>2. Ouvertures Clés (1er Tour des Bleus)</h3>
+    <table class="strat-table">
+      <thead>
+        <tr><th>Ouverture</th><th>Coup initial</th><th>Objectif</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Ouverture Centrale</strong></td><td>C1 → C2 (ou B1 → B3)</td><td>Place un « butoir » devant le Neutron.</td></tr>
+        <tr><td><strong>Aile Diagonale</strong></td><td>A1 → A4 (ou E1 → E4)</td><td>Menace les angles adverses (A5 / E5).</td></tr>
+        <tr><td><strong>Verrou Latéral</strong></td><td>B1 → D3</td><td>Occupe un pivot central et libère la colonne B.</td></tr>
+      </tbody>
+    </table>
+    <div class="strat-tip">
+      <strong>Conseil IA Difficile :</strong> Évitez d'avancer vos deux ailes (A1→A4 et E1→E4) trop tôt, sinon l'IA exploitera votre rangée arrière vide.
+    </div>
+
+    <h3>3. Tactiques Avancées &amp; Checklist</h3>
+    <ul>
+      <li><strong>Double Menace :</strong> Placez le Neutron sur une case offrant deux lignes de vue dégagées vers la cible adverse.</li>
+      <li><strong>Pion « Butoir » (Bumper) :</strong> Infiltrez un pion sur la rangée adverse (ex. C5) pour arrêter le Neutron sur une case voisine libre au tour suivant.</li>
+      <li><strong>Piège de Tempo (Zugzwang) :</strong> Laissez un couloir apparent vers un bord (ex. A2/E2) où un pion attend pour renvoyer le Neutron en diagonale.</li>
+      <li><strong>Défense Élastique :</strong> Ne laissez jamais plus de deux cases adjacentes vides sur votre ligne de départ et gardez un pion mobile à l'arrière.</li>
+    </ul>
+    <p><strong>Checklist avant chaque coup :</strong> 1) Mon adversaire peut-il gagner au tour suivant ? 2) Quel pion vais-je jouer juste après le Neutron ? 3) Ce coup ouvre-t-il une diagonale vers sa rangée ?</p>
+
+    <div class="modal-actions">
+      <a href="guide_fr.html" target="_blank" rel="noopener noreferrer" class="btn-link">📄 Ouvrir le Guide complet (Web / PDF)</a>
+      <button class="primary" onclick="closeModal('strategyModal')">Fermer</button>
     </div>
   </div>
 </div>
@@ -376,6 +469,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     [0, -1],           [0, 1],
     [1, -1],  [1, 0],  [1, 1]
   ];
+  const BASE_TITLE = "CoNeutron — Jeu de stratégie (Local & En Ligne)";
 
   let board = [];
   let turn = P1;
@@ -393,9 +487,10 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
   let cursor = [2, 2];
   let isAnimating = false;
 
-  // Audio
+  // Audio & Notifications
   let soundEnabled = true;
   let audioCtx = null;
+  let titleBlinkTimer = null;
 
   // Online state
   let cloudConfig = JSON.parse(localStorage.getItem('coneutron_cloud') || '{"provider":"firebase","fbUrl":"","sbUrl":"","sbKey":""}');
@@ -403,6 +498,10 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
   let pollTimer = null;
   let sseSource = null;
   let lastSyncedHash = "";
+
+  function switchLanguage(targetFile) {
+    window.location.href = targetFile + window.location.search;
+  }
 
   function initAudio() {
     if (!audioCtx) {
@@ -425,6 +524,50 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     gain.connect(audioCtx.destination);
     osc.start();
     osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function stopTitleBlink() {
+    if (titleBlinkTimer) {
+      clearInterval(titleBlinkTimer);
+      titleBlinkTimer = null;
+    }
+    document.title = BASE_TITLE;
+  }
+
+  function startTitleBlink(alertText) {
+    stopTitleBlink();
+    if (!document.hidden) return;
+    let toggle = false;
+    titleBlinkTimer = setInterval(() => {
+      document.title = toggle ? alertText : BASE_TITLE;
+      toggle = !toggle;
+    }, 900);
+  }
+
+  window.addEventListener('focus', stopTitleBlink);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) stopTitleBlink();
+  });
+
+  function triggerMyTurnNotification() {
+    const statusEl = document.getElementById('status');
+    statusEl.classList.remove('turn-alert');
+    void statusEl.offsetWidth;
+    statusEl.classList.add('turn-alert');
+
+    playTone(587.33, 0.11, 'sine', 0.09);
+    setTimeout(() => playTone(880, 0.18, 'sine', 0.1), 120);
+
+    startTitleBlink("🔴 À vous de jouer ! — CoNeutron");
+
+    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification("CoNeutron", {
+          body: "C'est à votre tour de jouer !",
+          tag: "coneutron-turn"
+        });
+      } catch (_) {}
+    }
   }
 
   function toggleSound() {
@@ -489,11 +632,31 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       initGame();
     } else {
       renderRecentRooms();
+      updateNewGameButton();
       updateStatus("Mode En Ligne : créez ou rejoignez un salon ci-dessus.");
     }
   }
 
+  function handleNewGameClick() {
+    if (mode === 'online' && currentRoom && !gameOver && moveHistory.length > 0) {
+      if (!confirm("Une partie en ligne est en cours. Voulez-vous vraiment la réinitialiser pour les deux joueurs ?")) {
+        return;
+      }
+    }
+    initGame();
+  }
+
+  function updateNewGameButton() {
+    const btn = document.getElementById('newGameBtn');
+    if (mode === 'online' && currentRoom && gameOver) {
+      btn.textContent = "🏆 Revanche";
+    } else {
+      btn.textContent = "Nouvelle Partie";
+    }
+  }
+
   function initGame(skipSync = false) {
+    stopTitleBlink();
     mode = document.getElementById('modeSelect').value;
     humanSide = parseInt(document.getElementById('sideSelect').value, 10);
     board = [
@@ -513,6 +676,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     undoStack = [];
     lastMove = null;
     updateUndoBtn();
+    updateNewGameButton();
     renderHistory();
     updateStatus();
     render();
@@ -582,6 +746,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       return;
     }
 
+    stopTitleBlink();
     const isMove = validMoves.some(([vr, vc]) => vr === r && vc === c);
     if (selected && isMove) {
       if (phase === 'NEUTRON' || isFirstTurn) {
@@ -642,6 +807,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     }
     updateScoreDisplay();
     updateUndoBtn();
+    updateNewGameButton();
     renderHistory();
     updateStatus();
     render();
@@ -664,10 +830,11 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     playTone(260 + dist * 40, duration / 1000, 'triangle', 0.06);
 
     if (fromCell && toCell) {
+      const offset = fromCell.offsetWidth <= 54 ? 7 : 9;
       const animEl = document.createElement('div');
       animEl.className = 'anim-piece piece ' + (pieceVal === P1 ? 'p1' : pieceVal === P2 ? 'p2' : 'neutron');
-      animEl.style.left = (fromCell.offsetLeft + 9) + 'px';
-      animEl.style.top = (fromCell.offsetTop + 9) + 'px';
+      animEl.style.left = (fromCell.offsetLeft + offset) + 'px';
+      animEl.style.top = (fromCell.offsetTop + offset) + 'px';
       animEl.style.transition = `left ${duration}ms ease-out, top ${duration}ms ease-out`;
       boardEl.appendChild(animEl);
 
@@ -675,8 +842,8 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       if (origPiece) origPiece.style.visibility = 'hidden';
 
       requestAnimationFrame(() => {
-        animEl.style.left = (toCell.offsetLeft + 9) + 'px';
-        animEl.style.top = (toCell.offsetTop + 9) + 'px';
+        animEl.style.left = (toCell.offsetLeft + offset) + 'px';
+        animEl.style.top = (toCell.offsetTop + offset) + 'px';
       });
 
       setTimeout(() => {
@@ -754,6 +921,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     validMoves = [];
     scores[winner]++;
     updateScoreDisplay();
+    updateNewGameButton();
     playTone(winner === P1 ? 587 : 440, 0.15);
     setTimeout(() => playTone(winner === P1 ? 784 : 554, 0.3), 160);
 
@@ -779,6 +947,13 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     const statusEl = document.getElementById('status');
     if (customText) {
       statusEl.textContent = customText;
+      return;
+    }
+    if (gameOver) {
+      const winner = checkWin(board) || (turn === P1 ? P2 : P1);
+      const winName = winner === P1 ? "Bleu (J1)" : "Rouge (J2)";
+      statusEl.textContent = `🏆 Victoire : ${winName} !`;
+      statusEl.style.borderLeftColor = winner === P1 ? 'var(--p1)' : 'var(--p2)';
       return;
     }
     const name = turn === P1 ? "Bleu (J1)" : "Rouge (J2)";
@@ -944,7 +1119,14 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
     const actions = getAllTurnActions(board, aiSide);
     if (actions.length === 0) {
-      endGame(humanSide, "IA bloquée");
+      const [nr, nc] = findNeutron(board);
+      const nMoves = getSlideDestinations(board, nr, nc);
+      if (nMoves.length > 0) {
+        const [ntr, ntc] = nMoves[0];
+        animateAndExecute(nr, nc, ntr, ntc);
+      } else {
+        endGame(humanSide, "IA bloquée");
+      }
       return;
     }
 
@@ -986,6 +1168,10 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     if (hash === lastSyncedHash) return;
     lastSyncedHash = hash;
 
+    const prevTurn = turn;
+    const prevGameOver = gameOver;
+    const prevMoveCount = moveHistory.length;
+
     board = state.board;
     turn = state.turn;
     phase = state.phase;
@@ -1004,10 +1190,27 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     }
 
     updateScoreDisplay();
+    updateNewGameButton();
     renderHistory();
     updateStatus();
     render();
-    playTone(660, 0.08);
+
+    const isMyTurnNow = !gameOver && currentRoom && turn === currentRoom.side;
+    const becameMyTurn = isMyTurnNow && (
+      prevTurn !== currentRoom.side ||
+      (prevGameOver && !gameOver) ||
+      (moveHistory.length === 0 && prevMoveCount > 0)
+    );
+
+    if (becameMyTurn) {
+      triggerMyTurnNotification();
+    } else if (!prevGameOver && gameOver) {
+      playTone(440, 0.15);
+      setTimeout(() => playTone(554, 0.28), 160);
+      stopTitleBlink();
+    } else {
+      playTone(660, 0.06);
+    }
   }
 
   async function connectRoom() {
@@ -1026,6 +1229,10 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     if (cloudConfig.provider === 'supabase' && (!cloudConfig.sbUrl || !cloudConfig.sbKey)) {
       openModal('cloudModal');
       return;
+    }
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
     }
 
     disconnectRoom();
@@ -1057,6 +1264,8 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       document.getElementById('shareBtn').style.display = 'inline-block';
       saveRecentRoom(roomId, pass, side);
       startListeningRoom();
+      updateUndoBtn();
+      updateNewGameButton();
       updateStatus();
       render();
     } catch (err) {
@@ -1071,10 +1280,12 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     pollTimer = null;
     sseSource = null;
     currentRoom = null;
+    stopTitleBlink();
     document.getElementById('shareBtn').style.display = 'none';
     const badge = document.getElementById('onlineStatusBadge');
     badge.textContent = "Hors ligne";
     badge.classList.remove('connected');
+    updateNewGameButton();
   }
 
   async function fetchRemoteRoom(roomId) {
@@ -1169,20 +1380,42 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
   function renderRecentRooms() {
     const container = document.getElementById('recentRoomsContainer');
     const list = JSON.parse(localStorage.getItem('coneutron_recent_rooms') || '[]');
+    container.innerHTML = '';
     if (list.length === 0) {
-      container.innerHTML = '<span style="color:var(--muted);">Aucun salon récent enregistré sur cet appareil.</span>';
+      const emptyMsg = document.createElement('span');
+      emptyMsg.style.color = 'var(--muted)';
+      emptyMsg.textContent = "Aucun salon récent enregistré sur cet appareil.";
+      container.appendChild(emptyMsg);
       return;
     }
-    container.innerHTML = '<span style="color:var(--muted);font-weight:600;">Mes salons :</span>';
+    const label = document.createElement('span');
+    label.style.color = 'var(--muted)';
+    label.style.fontWeight = '600';
+    label.textContent = "Mes salons :";
+    container.appendChild(label);
+
     list.forEach(r => {
       const chip = document.createElement('div');
       chip.className = 'room-chip';
       const sideLabel = r.side === 1 ? 'Bleu' : 'Rouge';
-      chip.innerHTML = `
-        <span><strong>${r.id}</strong> (${sideLabel} • ${r.date})</span>
-        <button onclick="loadRecentRoom('${r.id}', '${r.pass.replace(/'/g, "\\'")}', ${r.side})" title="Rejoindre">▶</button>
-        <button onclick="removeRecentRoom('${r.id}')" title="Supprimer">×</button>
-      `;
+
+      const info = document.createElement('span');
+      const strong = document.createElement('strong');
+      strong.textContent = r.id;
+      info.appendChild(strong);
+      info.append(` (${sideLabel} • ${r.date})`);
+
+      const joinBtn = document.createElement('button');
+      joinBtn.textContent = '▶';
+      joinBtn.title = 'Rejoindre';
+      joinBtn.onclick = () => loadRecentRoom(r.id, r.pass, r.side);
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '×';
+      delBtn.title = 'Supprimer';
+      delBtn.onclick = () => removeRecentRoom(r.id);
+
+      chip.append(info, joinBtn, delBtn);
       container.appendChild(chip);
     });
   }
@@ -1234,7 +1467,13 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
   // --- RACCOURCIS CLAVIER ---
   document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+      return;
+    }
+    if (document.querySelector('.modal-backdrop.open')) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
     const key = e.key.toLowerCase();
     if (e.key === 'ArrowUp') { e.preventDefault(); cursor[0] = (cursor[0] + 4) % 5; render(); }
     else if (e.key === 'ArrowDown') { e.preventDefault(); cursor[0] = (cursor[0] + 1) % 5; render(); }
@@ -1242,11 +1481,12 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     else if (e.key === 'ArrowRight') { e.preventDefault(); cursor[1] = (cursor[1] + 1) % 5; render(); }
     else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick(cursor[0], cursor[1]); }
     else if (key === 'z') undoMove();
-    else if (key === 'n') initGame();
+    else if (key === 'n') handleNewGameClick();
     else if (key === 'm') toggleSound();
     else if (key === 't') toggleTheme();
     else if (key === 'f') toggleFullscreen();
     else if (key === 'h') openModal('rulesModal');
+    else if (key === 's') openModal('strategyModal');
   });
 
   if (!checkInviteUrl()) {

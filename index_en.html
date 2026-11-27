@@ -1,0 +1,1497 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoNeutron — Strategy Game (Local & Online)</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-alt: #263348;
+    --cell-light: #334155;
+    --cell-dark: #283548;
+    --p1: #38bdf8;
+    --p2: #f43f5e;
+    --neutron: #facc15;
+    --valid: rgba(74, 222, 128, 0.35);
+    --last-move: rgba(250, 204, 21, 0.28);
+    --text: #f8fafc;
+    --muted: #94a3b8;
+    --border: #475569;
+  }
+
+  body.light-theme {
+    --bg: #f1f5f9;
+    --panel: #ffffff;
+    --panel-alt: #f8fafc;
+    --cell-light: #cbd5e1;
+    --cell-dark: #94a3b8;
+    --p1: #0284c7;
+    --p2: #e11d48;
+    --neutron: #eab308;
+    --valid: rgba(22, 163, 74, 0.35);
+    --last-move: rgba(234, 179, 8, 0.32);
+    --text: #0f172a;
+    --muted: #475569;
+    --border: #cbd5e1;
+  }
+
+  * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    display: flex; flex-direction: column; align-items: center; padding: 14px;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  header {
+    width: 100%; max-width: 860px; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
+  }
+  h1 { margin: 0; font-size: 1.65rem; letter-spacing: 0.5px; }
+
+  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  button, select, input, .btn-link {
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    padding: 7px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s; text-decoration: none;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  input { cursor: text; }
+  button:hover, select:hover, input:focus, .btn-link:hover { border-color: var(--p1); outline: none; }
+  button.primary, .btn-link.primary { background: #2563eb; border-color: #3b82f6; color: #fff; font-weight: 600; }
+  button.primary:hover, .btn-link.primary:hover { background: #1d4ed8; }
+  button.share-btn { background: #059669; border-color: #10b981; color: #fff; font-weight: 600; }
+  button.share-btn:hover { background: #047857; }
+  button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .controls-bar {
+    width: 100%; max-width: 860px; background: var(--panel); padding: 10px 14px;
+    border-radius: 12px; display: flex; flex-wrap: wrap; gap: 8px;
+    align-items: center; justify-content: center; margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .online-panel {
+    width: 100%; max-width: 860px; background: var(--panel); padding: 12px 14px;
+    border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border);
+    display: none; flex-direction: column; gap: 10px;
+  }
+  .online-panel.active { display: flex; }
+  .online-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .online-badge {
+    font-size: 0.8rem; padding: 3px 8px; border-radius: 999px;
+    background: var(--panel-alt); border: 1px solid var(--border);
+  }
+  .online-badge.connected { border-color: #22c55e; color: #22c55e; }
+
+  .recent-rooms {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    padding-top: 6px; border-top: 1px dashed var(--border); font-size: 0.85rem;
+  }
+  .room-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--panel-alt); border: 1px solid var(--border);
+    padding: 4px 8px; border-radius: 8px;
+  }
+  .room-chip button { padding: 2px 6px; font-size: 0.8rem; }
+
+  .scoreboard {
+    width: 100%; max-width: 860px; display: flex; justify-content: space-between;
+    align-items: center; background: var(--panel); padding: 8px 16px;
+    border-radius: 10px; margin-bottom: 12px; border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .score-p1 { color: var(--p1); }
+  .score-p2 { color: var(--p2); }
+
+  @keyframes turnPulse {
+    0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.65); }
+    70% { box-shadow: 0 0 0 12px rgba(56, 189, 248, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+  }
+
+  .status {
+    width: 100%; max-width: 860px; background: var(--panel); padding: 11px 16px;
+    border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 1rem;
+    border-left: 5px solid var(--p1); text-align: center; border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  }
+  .status.turn-alert {
+    animation: turnPulse 1.1s ease-out 2;
+  }
+
+  .main-layout {
+    width: 100%; max-width: 860px; display: flex; flex-wrap: wrap;
+    gap: 18px; justify-content: center; align-items: flex-start;
+  }
+
+  .board-container {
+    background: var(--panel); padding: 12px; border-radius: 14px;
+    border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    position: relative;
+  }
+
+  .goal-label {
+    text-align: center; font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 1.4px; padding: 4px 0; font-weight: 700;
+  }
+  .goal-top { color: var(--p1); }
+  .goal-bottom { color: var(--p2); }
+
+  .board-grid-wrap { display: flex; align-items: center; gap: 6px; }
+  .coords-col {
+    display: flex; flex-direction: column; justify-content: space-around;
+    height: 336px; font-size: 0.78rem; color: var(--muted); font-weight: 600;
+  }
+  .coords-row {
+    display: flex; justify-content: space-around; padding-left: 18px;
+    font-size: 0.78rem; color: var(--muted); font-weight: 600; margin-top: 4px;
+  }
+
+  .board {
+    position: relative; display: grid;
+    grid-template-columns: repeat(5, 64px); grid-template-rows: repeat(5, 64px);
+    gap: 4px; background: #0f172a; padding: 4px; border-radius: 8px;
+  }
+
+  .cell {
+    width: 64px; height: 64px; background: var(--cell-light); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    position: relative;
+  }
+  .cell.dark { background: var(--cell-dark); }
+  .cell.last-move { background: var(--last-move); }
+  .cell.cursor { outline: 3px solid #f8fafc; z-index: 2; }
+  .cell.valid::after {
+    content: ""; width: 20px; height: 20px; border-radius: 50%;
+    background: #4ade80; box-shadow: 0 0 8px #4ade80;
+  }
+  .cell.valid:hover { background: var(--valid); }
+
+  .piece {
+    width: 46px; height: 46px; border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: transform 0.15s;
+  }
+  .piece.p1 { background: radial-gradient(circle at 30% 30%, #7dd3fc, var(--p1)); }
+  .piece.p2 { background: radial-gradient(circle at 30% 30%, #fda4af, var(--p2)); }
+  .piece.neutron {
+    background: radial-gradient(circle at 30% 30%, #fef08a, var(--neutron));
+    border: 3px solid #fff;
+  }
+  .piece.selected {
+    transform: scale(1.12);
+    box-shadow: 0 0 0 4px #ffffff, 0 6px 14px rgba(0,0,0,0.6);
+  }
+
+  .anim-piece {
+    position: absolute; width: 46px; height: 46px; border-radius: 50%;
+    pointer-events: none; z-index: 10; box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+  }
+
+  .history-panel {
+    flex: 1; min-width: 240px; max-width: 340px; background: var(--panel);
+    border-radius: 14px; padding: 12px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; height: 416px;
+  }
+  .history-header {
+    font-weight: 700; font-size: 0.95rem; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    display: flex; justify-content: space-between;
+  }
+  .history-list {
+    flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+    font-size: 0.85rem;
+  }
+  .move-item {
+    padding: 5px 8px; border-radius: 6px; background: var(--panel-alt);
+    display: flex; justify-content: space-between;
+  }
+
+  /* Footer */
+  .site-footer {
+    width: 100%; max-width: 860px; margin-top: 20px; padding: 12px 16px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+    text-align: center; font-size: 0.85rem; color: var(--muted);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .site-footer a { color: var(--p1); text-decoration: none; font-weight: 600; }
+  .site-footer a:hover { text-decoration: underline; }
+
+  /* Modals */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.65);
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    border-radius: 14px; max-width: 500px; width: 100%; padding: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5); max-height: 88vh; overflow-y: auto;
+  }
+  .modal.modal-wide { max-width: 660px; }
+  .modal h2 { margin-top: 0; font-size: 1.25rem; }
+  .modal h3 { margin: 14px 0 6px; font-size: 1rem; color: var(--p1); }
+  .modal ul { margin: 6px 0; padding-left: 20px; line-height: 1.5; font-size: 0.92rem; }
+  .modal p { line-height: 1.5; font-size: 0.93rem; }
+  .strat-table {
+    width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.85rem;
+  }
+  .strat-table th, .strat-table td {
+    border: 1px solid var(--border); padding: 6px 8px; text-align: left;
+  }
+  .strat-table th { background: var(--panel-alt); }
+  .strat-tip {
+    background: var(--panel-alt); border-left: 4px solid var(--neutron);
+    padding: 8px 12px; border-radius: 6px; font-size: 0.88rem; margin: 10px 0;
+  }
+  .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  pre.sql-box {
+    background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px;
+    font-size: 0.75rem; overflow-x: auto; user-select: all;
+  }
+
+  @media (max-width: 440px) {
+    .board { grid-template-columns: repeat(5, 52px); grid-template-rows: repeat(5, 52px); }
+    .cell { width: 52px; height: 52px; }
+    .piece, .anim-piece { width: 38px; height: 38px; }
+    .coords-col { height: 276px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>CoNeutron</h1>
+  <div class="toolbar">
+    <button id="soundBtn" onclick="toggleSound()" title="Mute/Unmute sound (M)">🔊 Sound</button>
+    <button id="themeBtn" onclick="toggleTheme()" title="Switch theme (T)">☀️ Theme</button>
+    <button onclick="toggleFullscreen()" title="Fullscreen (F)">⛶ Fullscreen</button>
+    <button onclick="openModal('rulesModal')" title="Game rules (H)">📖 Rules</button>
+    <button onclick="openModal('strategyModal')" title="Strategy guide (S)">🎓 Strategy</button>
+    <button onclick="openModal('cloudModal')">⚙️ Cloud Setup</button>
+    <button onclick="switchLanguage('index.html')" title="Passer en français">🇫🇷 FR</button>
+  </div>
+</header>
+
+<div class="controls-bar">
+  <select id="modeSelect" onchange="onModeChange()">
+    <option value="ai">1 Player vs AI</option>
+    <option value="pvp">2 Players (Local)</option>
+    <option value="online">Online (Live & Async)</option>
+  </select>
+
+  <select id="diffSelect">
+    <option value="1">AI: Easy</option>
+    <option value="2" selected>AI: Medium</option>
+    <option value="3">AI: Hard</option>
+  </select>
+
+  <select id="sideSelect" onchange="initGame()">
+    <option value="1">Side: Blue (1st)</option>
+    <option value="2">Side: Red (2nd)</option>
+  </select>
+
+  <button id="undoBtn" onclick="undoMove()" title="Undo last turn (Z)">↩ Undo</button>
+  <button id="newGameBtn" class="primary" onclick="handleNewGameClick()" title="New Game (N)">New Game</button>
+</div>
+
+<div class="online-panel" id="onlinePanel">
+  <div class="online-row">
+    <input type="text" id="roomInput" placeholder="Room name (e.g. duel42)" style="width: 170px;">
+    <input type="password" id="passInput" placeholder="Password" style="width: 150px;">
+    <select id="onlineSideSelect">
+      <option value="1">Play Blue (1st)</option>
+      <option value="2">Play Red (2nd)</option>
+    </select>
+    <button class="primary" onclick="connectRoom()">Create / Join</button>
+    <button class="share-btn" id="shareBtn" onclick="shareInviteLink()" style="display:none;">🔗 Share Invite</button>
+    <span class="online-badge" id="onlineStatusBadge">Offline</span>
+  </div>
+  <div class="recent-rooms" id="recentRoomsContainer"></div>
+</div>
+
+<div class="scoreboard">
+  <span class="score-p1">Blue (P1): <span id="scoreP1">0</span></span>
+  <button onclick="resetScores()" style="padding: 4px 10px; font-size: 0.8rem;">Reset Scores</button>
+  <span class="score-p2">Red (P2): <span id="scoreP2">0</span></span>
+</div>
+
+<div class="status" id="status">Initializing...</div>
+
+<div class="main-layout">
+  <div class="board-container">
+    <div class="goal-label goal-top">▲ Blue Goal (Row 5) ▲</div>
+    <div class="board-grid-wrap">
+      <div class="coords-col">
+        <span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+    <div class="coords-row">
+      <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
+    </div>
+    <div class="goal-label goal-bottom">▼ Red Goal (Row 1) ▼</div>
+  </div>
+
+  <div class="history-panel">
+    <div class="history-header">
+      <span>Move History</span>
+      <span id="turnCounter" style="color: var(--muted); font-weight: 500;">Move 1</span>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div>
+    <strong>CoNeutron</strong> — Created by <strong>Mark Owen</strong> &amp; <strong>Julian Richardson</strong> •
+    <a href="https://www.solipsys.co.uk/new/CoNeutron.html" target="_blank" rel="noopener noreferrer">Official Game Page</a>
+  </div>
+  <div>
+    <a href="Guide_Strategique_CoNeutron.pdf" download>📥 Download Strategy Guide (PDF - French)</a>
+  </div>
+</footer>
+
+<!-- Rules Modal -->
+<div class="modal-backdrop" id="rulesModal" onclick="if(event.target===this)closeModal('rulesModal')">
+  <div class="modal">
+    <h2>📖 CoNeutron Rules</h2>
+    <p><strong>1. Inverted Goal:</strong> Push the <strong>Neutron (yellow)</strong> onto your opponent's starting row (row 5 for Blue, row 1 for Red).</p>
+    <p><strong>2. Mandatory Sliding:</strong> Every piece (pawns and the Neutron) slides in a straight line (horizontally, vertically, or diagonally) as far as possible until it hits the edge of the board or another piece.</p>
+    <p><strong>3. Two-Step Turn:</strong> On each turn, you must first move the <strong>Neutron</strong>, and then move one of <strong>your own pawns</strong>.</p>
+    <p><strong>4. First-Turn Exception:</strong> On the very first turn of the game, Blue moves only one Blue pawn (without moving the Neutron).</p>
+    <p><strong>5. Stalemate Loss:</strong> If a player cannot legally move the Neutron or any of their pawns during their turn, they immediately lose the game.</p>
+    <div class="modal-actions">
+      <button onclick="closeModal('rulesModal');openModal('strategyModal')">🎓 Strategy Guide</button>
+      <button class="primary" onclick="closeModal('rulesModal')">Got it</button>
+    </div>
+  </div>
+</div>
+
+<!-- Strategy Modal -->
+<div class="modal-backdrop" id="strategyModal" onclick="if(event.target===this)closeModal('strategyModal')">
+  <div class="modal modal-wide">
+    <h2>🎓 Strategy Guide: Mastering CoNeutron</h2>
+    <p>Unlike classic <em>Neutron</em>, your goal in CoNeutron is to propel the Neutron onto your <strong>opponent's starting row</strong> (row 5 for Blue, row 1 for Red).</p>
+
+    <h3>1. The 3 Core Principles</h3>
+    <ul>
+      <li><strong>Open lanes instead of walling:</strong> Avoid building a wall in front of the enemy's back rank. Keep <strong>clear columns or diagonals</strong> pointing toward your target row.</li>
+      <li><strong>Control the center (C3):</strong> From C3, the Neutron has 8 slide directions. Once it touches an edge (A or E), it loses 3 directions. Controlling <strong>B3, C3, D3, C2, C4</strong> lets you steer the game.</li>
+      <li><strong>Suffocation (Blockade win):</strong> Surrounding the Neutron while keeping one back pawn mobile for your second move is often safer than a direct rush.</li>
+    </ul>
+
+    <h3>2. Key Openings (Blue's 1st Turn)</h3>
+    <table class="strat-table">
+      <thead>
+        <tr><th>Opening</th><th>Initial Move</th><th>Strategic Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Central Opening</strong></td><td>C1 → C2 (or B1 → B3)</td><td>Places a "bumper" in front of the Neutron.</td></tr>
+        <tr><td><strong>Diagonal Wing</strong></td><td>A1 → A4 (or E1 → E4)</td><td>Threatens enemy corners (A5 / E5) and sets up diagonal rebounds.</td></tr>
+        <tr><td><strong>Lateral Lock</strong></td><td>B1 → D3</td><td>Claims a central pivot while freeing column B for defense.</td></tr>
+      </tbody>
+    </table>
+    <div class="strat-tip">
+      <strong>Tip vs. Hard AI:</strong> Avoid advancing both wings (A1→A4 and E1→E4) too early; the AI will exploit your empty back rank.
+    </div>
+
+    <h3>3. Advanced Tactics &amp; Checklist</h3>
+    <ul>
+      <li><strong>Double Threat (Fork):</strong> Place the Neutron on a square with two clear sightlines to the opponent's back rank (e.g., a file and a diagonal).</li>
+      <li><strong>Bumper Pawn:</strong> Infiltrate a pawn onto the opponent's back rank (e.g. C5) so it acts as a stopping block for the Neutron on an adjacent empty square.</li>
+      <li><strong>Tempo Trap (Zugzwang):</strong> Leave an enticing lane to an edge (e.g. A2/E2) where your pawn waits to bounce the Neutron diagonally back toward their goal.</li>
+      <li><strong>Elastic Defense:</strong> Never leave more than two adjacent empty squares on your starting row and keep a mobile back-rank defender.</li>
+    </ul>
+    <p><strong>Pre-move checklist:</strong> 1) Can my opponent win next turn? 2) Which pawn will I move right after the Neutron? 3) Does this open a diagonal toward their goal?</p>
+
+    <div class="modal-actions">
+      
+      <button class="primary" onclick="closeModal('strategyModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cloud Config Modal -->
+<div class="modal-backdrop" id="cloudModal" onclick="if(event.target===this)closeModal('cloudModal')">
+  <div class="modal">
+    <h2>⚙️ Cloud Setup (Free Tier)</h2>
+    <div class="form-group">
+      <label>Database Provider</label>
+      <select id="cloudProvider" onchange="toggleCloudFields()">
+        <option value="firebase">Firebase Realtime Database</option>
+        <option value="supabase">Supabase (PostgreSQL)</option>
+      </select>
+    </div>
+    <div id="firebaseFields">
+      <div class="form-group">
+        <label>Firebase Realtime Database URL</label>
+        <input type="text" id="fbUrlInput" placeholder="https://your-project-default-rtdb.firebaseio.com">
+      </div>
+    </div>
+    <div id="supabaseFields" style="display:none;">
+      <div class="form-group">
+        <label>Supabase Project URL</label>
+        <input type="text" id="sbUrlInput" placeholder="https://xxxx.supabase.co">
+      </div>
+      <div class="form-group">
+        <label>Supabase Anon Public Key</label>
+        <input type="text" id="sbKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+      </div>
+      <div class="form-group">
+        <label>SQL Script to run in Supabase (SQL Editor)</label>
+        <pre class="sql-box">create table if not exists coneutron_rooms (
+  id text primary key,
+  pass_hash text not null,
+  state jsonb not null,
+  updated_at timestamptz default now()
+);
+alter table coneutron_rooms enable row level security;
+create policy "public_access" on coneutron_rooms for all using (true) with check (true);</pre>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal('cloudModal')">Cancel</button>
+      <button class="primary" onclick="saveCloudConfig()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const EMPTY = 0, P1 = 1, P2 = 2, NEUTRON = 3;
+  const COLS = ['A', 'B', 'C', 'D', 'E'];
+  const DIRS = [
+    [-1, -1], [-1, 0], [-1, 1],
+    [0, -1],           [0, 1],
+    [1, -1],  [1, 0],  [1, 1]
+  ];
+  const BASE_TITLE = "CoNeutron — Strategy Game (Local & Online)";
+
+  let board = [];
+  let turn = P1;
+  let phase = 'PIECE';
+  let isFirstTurn = true;
+  let selected = null;
+  let validMoves = [];
+  let gameOver = false;
+  let mode = 'ai';
+  let humanSide = P1;
+  let scores = { 1: 0, 2: 0 };
+  let moveHistory = [];
+  let undoStack = [];
+  let lastMove = null;
+  let cursor = [2, 2];
+  let isAnimating = false;
+
+  // Audio & Notifications
+  let soundEnabled = true;
+  let audioCtx = null;
+  let titleBlinkTimer = null;
+
+  // Online state
+  let cloudConfig = JSON.parse(localStorage.getItem('coneutron_cloud') || '{"provider":"firebase","fbUrl":"","sbUrl":"","sbKey":""}');
+  let currentRoom = null;
+  let pollTimer = null;
+  let sseSource = null;
+  let lastSyncedHash = "";
+
+  function switchLanguage(targetFile) {
+    window.location.href = targetFile + window.location.search;
+  }
+
+  function initAudio() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+  }
+
+  function playTone(freq, duration, type = 'sine', vol = 0.08) {
+    if (!soundEnabled) return;
+    initAudio();
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
+  }
+
+  function stopTitleBlink() {
+    if (titleBlinkTimer) {
+      clearInterval(titleBlinkTimer);
+      titleBlinkTimer = null;
+    }
+    document.title = BASE_TITLE;
+  }
+
+  function startTitleBlink(alertText) {
+    stopTitleBlink();
+    if (!document.hidden) return;
+    let toggle = false;
+    titleBlinkTimer = setInterval(() => {
+      document.title = toggle ? alertText : BASE_TITLE;
+      toggle = !toggle;
+    }, 900);
+  }
+
+  window.addEventListener('focus', stopTitleBlink);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) stopTitleBlink();
+  });
+
+  function triggerMyTurnNotification() {
+    const statusEl = document.getElementById('status');
+    statusEl.classList.remove('turn-alert');
+    void statusEl.offsetWidth;
+    statusEl.classList.add('turn-alert');
+
+    playTone(587.33, 0.11, 'sine', 0.09);
+    setTimeout(() => playTone(880, 0.18, 'sine', 0.1), 120);
+
+    startTitleBlink("🔴 Your Turn! — CoNeutron");
+
+    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification("CoNeutron", {
+          body: "It's your turn to play!",
+          tag: "coneutron-turn"
+        });
+      } catch (_) {}
+    }
+  }
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('soundBtn').textContent = soundEnabled ? '🔊 Sound' : '🔇 Muted';
+  }
+
+  function toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    document.getElementById('themeBtn').textContent = isLight ? '🌙 Dark' : '☀️ Theme';
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  function openModal(id) {
+    if (id === 'cloudModal') {
+      document.getElementById('cloudProvider').value = cloudConfig.provider || 'firebase';
+      document.getElementById('fbUrlInput').value = cloudConfig.fbUrl || '';
+      document.getElementById('sbUrlInput').value = cloudConfig.sbUrl || '';
+      document.getElementById('sbKeyInput').value = cloudConfig.sbKey || '';
+      toggleCloudFields();
+    }
+    document.getElementById(id).classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function toggleCloudFields() {
+    const p = document.getElementById('cloudProvider').value;
+    document.getElementById('firebaseFields').style.display = p === 'firebase' ? 'block' : 'none';
+    document.getElementById('supabaseFields').style.display = p === 'supabase' ? 'block' : 'none';
+  }
+
+  function saveCloudConfig() {
+    cloudConfig = {
+      provider: document.getElementById('cloudProvider').value,
+      fbUrl: document.getElementById('fbUrlInput').value.trim().replace(/\/$/, ''),
+      sbUrl: document.getElementById('sbUrlInput').value.trim().replace(/\/$/, ''),
+      sbKey: document.getElementById('sbKeyInput').value.trim()
+    };
+    localStorage.setItem('coneutron_cloud', JSON.stringify(cloudConfig));
+    closeModal('cloudModal');
+    updateStatus("Cloud configuration saved.");
+  }
+
+  function onModeChange() {
+    mode = document.getElementById('modeSelect').value;
+    document.getElementById('diffSelect').style.display = mode === 'ai' ? 'inline-block' : 'none';
+    document.getElementById('sideSelect').style.display = mode === 'ai' ? 'inline-block' : 'none';
+    document.getElementById('onlinePanel').classList.toggle('active', mode === 'online');
+    if (mode !== 'online') {
+      disconnectRoom();
+      initGame();
+    } else {
+      renderRecentRooms();
+      updateNewGameButton();
+      updateStatus("Online Mode: create or join a room above.");
+    }
+  }
+
+  function handleNewGameClick() {
+    if (mode === 'online' && currentRoom && !gameOver && moveHistory.length > 0) {
+      if (!confirm("An online game is currently in progress. Are you sure you want to reset it for both players?")) {
+        return;
+      }
+    }
+    initGame();
+  }
+
+  function updateNewGameButton() {
+    const btn = document.getElementById('newGameBtn');
+    if (mode === 'online' && currentRoom && gameOver) {
+      btn.textContent = "🏆 Rematch";
+    } else {
+      btn.textContent = "New Game";
+    }
+  }
+
+  function initGame(skipSync = false) {
+    stopTitleBlink();
+    mode = document.getElementById('modeSelect').value;
+    humanSide = parseInt(document.getElementById('sideSelect').value, 10);
+    board = [
+      [P2, P2, P2, P2, P2],
+      [0,  0,  0,  0,  0],
+      [0,  0,  NEUTRON, 0, 0],
+      [0,  0,  0,  0,  0],
+      [P1, P1, P1, P1, P1]
+    ];
+    turn = P1;
+    phase = 'PIECE';
+    isFirstTurn = true;
+    selected = null;
+    validMoves = [];
+    gameOver = false;
+    moveHistory = [];
+    undoStack = [];
+    lastMove = null;
+    updateUndoBtn();
+    updateNewGameButton();
+    renderHistory();
+    updateStatus();
+    render();
+
+    if (mode === 'online' && currentRoom && !skipSync) {
+      pushOnlineState();
+    } else if (mode === 'ai' && humanSide === P2) {
+      setTimeout(playAITurn, 450);
+    }
+  }
+
+  function coordToNotation(r, c) {
+    return `${COLS[c]}${5 - r}`;
+  }
+
+  function getSlideDestinations(b, r, c) {
+    const moves = [];
+    for (const [dr, dc] of DIRS) {
+      let nr = r + dr, nc = c + dc;
+      let steps = 0;
+      while (nr >= 0 && nr < 5 && nc >= 0 && nc < 5 && b[nr][nc] === EMPTY) {
+        nr += dr;
+        nc += dc;
+        steps++;
+      }
+      if (steps > 0) moves.push([nr - dr, nc - dc]);
+    }
+    return moves;
+  }
+
+  function findNeutron(b) {
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (b[r][c] === NEUTRON) return [r, c];
+      }
+    }
+    return [2, 2];
+  }
+
+  function checkWin(b) {
+    const [nr] = findNeutron(b);
+    if (nr === 0) return P1;
+    if (nr === 4) return P2;
+    return 0;
+  }
+
+  function hasAnyPieceMove(b, player) {
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (b[r][c] === player && getSlideDestinations(b, r, c).length > 0) return true;
+      }
+    }
+    return false;
+  }
+
+  function canLocalPlayerAct() {
+    if (gameOver || isAnimating) return false;
+    if (mode === 'ai') return turn === humanSide;
+    if (mode === 'online') return currentRoom && turn === currentRoom.side;
+    return true;
+  }
+
+  function handleCellClick(r, c) {
+    cursor = [r, c];
+    if (!canLocalPlayerAct()) {
+      render();
+      return;
+    }
+
+    stopTitleBlink();
+    const isMove = validMoves.some(([vr, vc]) => vr === r && vc === c);
+    if (selected && isMove) {
+      if (phase === 'NEUTRON' || isFirstTurn) {
+        saveUndoSnapshot();
+      }
+      animateAndExecute(selected[0], selected[1], r, c);
+      return;
+    }
+
+    const cellVal = board[r][c];
+    if (phase === 'NEUTRON' && cellVal === NEUTRON) {
+      selected = [r, c];
+      validMoves = getSlideDestinations(board, r, c);
+      playTone(520, 0.06);
+    } else if (phase === 'PIECE' && cellVal === turn) {
+      selected = [r, c];
+      validMoves = getSlideDestinations(board, r, c);
+      playTone(520, 0.06);
+    }
+    render();
+  }
+
+  function saveUndoSnapshot() {
+    undoStack.push({
+      board: board.map(r => [...r]),
+      turn,
+      phase,
+      isFirstTurn,
+      moveHistory: [...moveHistory],
+      lastMove: lastMove ? [...lastMove] : null,
+      scores: { ...scores }
+    });
+    updateUndoBtn();
+  }
+
+  function undoMove() {
+    if (undoStack.length === 0 || isAnimating) return;
+    if (mode === 'online') {
+      updateStatus("Undo is disabled in online mode.");
+      return;
+    }
+    const snap = undoStack.pop();
+    board = snap.board;
+    turn = snap.turn;
+    phase = snap.phase;
+    isFirstTurn = snap.isFirstTurn;
+    moveHistory = snap.moveHistory;
+    lastMove = snap.lastMove;
+    scores = snap.scores;
+    gameOver = false;
+    selected = null;
+    validMoves = [];
+
+    if (phase === 'NEUTRON') {
+      const [nr, nc] = findNeutron(board);
+      selected = [nr, nc];
+      validMoves = getSlideDestinations(board, nr, nc);
+    }
+    updateScoreDisplay();
+    updateUndoBtn();
+    updateNewGameButton();
+    renderHistory();
+    updateStatus();
+    render();
+  }
+
+  function updateUndoBtn() {
+    document.getElementById('undoBtn').disabled = (undoStack.length === 0 || mode === 'online');
+  }
+
+  function animateAndExecute(fr, fc, tr, tc, callback) {
+    isAnimating = true;
+    const boardEl = document.getElementById('board');
+    const cells = boardEl.querySelectorAll('.cell');
+    const fromCell = cells[fr * 5 + fc];
+    const toCell = cells[tr * 5 + tc];
+    const pieceVal = board[fr][fc];
+
+    const dist = Math.max(Math.abs(tr - fr), Math.abs(tc - fc));
+    const duration = 120 + dist * 45;
+    playTone(260 + dist * 40, duration / 1000, 'triangle', 0.06);
+
+    if (fromCell && toCell) {
+      const offset = fromCell.offsetWidth <= 54 ? 7 : 9;
+      const animEl = document.createElement('div');
+      animEl.className = 'anim-piece piece ' + (pieceVal === P1 ? 'p1' : pieceVal === P2 ? 'p2' : 'neutron');
+      animEl.style.left = (fromCell.offsetLeft + offset) + 'px';
+      animEl.style.top = (fromCell.offsetTop + offset) + 'px';
+      animEl.style.transition = `left ${duration}ms ease-out, top ${duration}ms ease-out`;
+      boardEl.appendChild(animEl);
+
+      const origPiece = fromCell.querySelector('.piece');
+      if (origPiece) origPiece.style.visibility = 'hidden';
+
+      requestAnimationFrame(() => {
+        animEl.style.left = (toCell.offsetLeft + offset) + 'px';
+        animEl.style.top = (toCell.offsetTop + offset) + 'px';
+      });
+
+      setTimeout(() => {
+        animEl.remove();
+        isAnimating = false;
+        finalizeMove(fr, fc, tr, tc);
+        if (callback) callback();
+      }, duration + 15);
+    } else {
+      isAnimating = false;
+      finalizeMove(fr, fc, tr, tc);
+      if (callback) callback();
+    }
+  }
+
+  function finalizeMove(fr, fc, tr, tc) {
+    const piece = board[fr][fc];
+    board[fr][fc] = EMPTY;
+    board[tr][tc] = piece;
+    selected = null;
+    validMoves = [];
+    lastMove = [fr, fc, tr, tc];
+
+    const label = piece === NEUTRON ? 'Neutron' : (turn === P1 ? 'Blue' : 'Red');
+    moveHistory.push({
+      player: turn,
+      text: `${label}: ${coordToNotation(fr, fc)} → ${coordToNotation(tr, tc)}`
+    });
+    renderHistory();
+
+    const winner = checkWin(board);
+    if (winner) {
+      endGame(winner);
+      if (mode === 'online' && currentRoom) pushOnlineState();
+      return;
+    }
+
+    if (phase === 'NEUTRON') {
+      phase = 'PIECE';
+      if (!hasAnyPieceMove(board, turn)) {
+        endGame(turn === P1 ? P2 : P1, "opponent blocked");
+        if (mode === 'online' && currentRoom) pushOnlineState();
+        return;
+      }
+    } else {
+      isFirstTurn = false;
+      turn = (turn === P1) ? P2 : P1;
+      phase = 'NEUTRON';
+      const [nr, nc] = findNeutron(board);
+      const nMoves = getSlideDestinations(board, nr, nc);
+      if (nMoves.length === 0) {
+        endGame(turn === P1 ? P2 : P1, "Neutron blocked");
+        if (mode === 'online' && currentRoom) pushOnlineState();
+        return;
+      }
+      if (canLocalPlayerAct()) {
+        selected = [nr, nc];
+        validMoves = nMoves;
+      }
+    }
+
+    updateStatus();
+    render();
+
+    if (mode === 'online' && currentRoom) {
+      pushOnlineState();
+    } else if (!gameOver && mode === 'ai' && turn !== humanSide) {
+      setTimeout(playAITurn, 350);
+    }
+  }
+
+  function endGame(winner, reason = "") {
+    gameOver = true;
+    selected = null;
+    validMoves = [];
+    scores[winner]++;
+    updateScoreDisplay();
+    updateNewGameButton();
+    playTone(winner === P1 ? 587 : 440, 0.15);
+    setTimeout(() => playTone(winner === P1 ? 784 : 554, 0.3), 160);
+
+    const name = winner === P1 ? "Blue (P1)" : "Red (P2)";
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = `🏆 Winner: ${name} ${reason ? `(${reason})` : ''}!`;
+    statusEl.style.borderLeftColor = winner === P1 ? 'var(--p1)' : 'var(--p2)';
+    render();
+  }
+
+  function updateScoreDisplay() {
+    document.getElementById('scoreP1').textContent = scores[1];
+    document.getElementById('scoreP2').textContent = scores[2];
+  }
+
+  function resetScores() {
+    scores = { 1: 0, 2: 0 };
+    updateScoreDisplay();
+    if (mode === 'online' && currentRoom) pushOnlineState();
+  }
+
+  function updateStatus(customText = null) {
+    const statusEl = document.getElementById('status');
+    if (customText) {
+      statusEl.textContent = customText;
+      return;
+    }
+    if (gameOver) {
+      const winner = checkWin(board) || (turn === P1 ? P2 : P1);
+      const winName = winner === P1 ? "Blue (P1)" : "Red (P2)";
+      statusEl.textContent = `🏆 Winner: ${winName}!`;
+      statusEl.style.borderLeftColor = winner === P1 ? 'var(--p1)' : 'var(--p2)';
+      return;
+    }
+    const name = turn === P1 ? "Blue (P1)" : "Red (P2)";
+    let suffix = "";
+    if (mode === 'online' && currentRoom) {
+      suffix = (turn === currentRoom.side) ? " (Your turn)" : " (Waiting for opponent)";
+    } else if (mode === 'ai') {
+      suffix = (turn === humanSide) ? " (You)" : " (AI)";
+    }
+    const action = phase === 'NEUTRON'
+      ? "move the Neutron (yellow)"
+      : (isFirstTurn ? "1st turn: move a pawn" : "move one of your pawns");
+    statusEl.textContent = `${name}${suffix}: ${action}`;
+    statusEl.style.borderLeftColor = turn === P1 ? 'var(--p1)' : 'var(--p2)';
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+    moveHistory.forEach((m, idx) => {
+      const div = document.createElement('div');
+      div.className = 'move-item';
+      div.style.borderLeft = `3px solid ${m.player === P1 ? 'var(--p1)' : 'var(--p2)'}`;
+      div.innerHTML = `<span>#${idx + 1}</span><span>${m.text}</span>`;
+      list.appendChild(div);
+    });
+    list.scrollTop = list.scrollHeight;
+    document.getElementById('turnCounter').textContent = `Move ${moveHistory.length + 1}`;
+  }
+
+  function render() {
+    const boardEl = document.getElementById('board');
+    boardEl.innerHTML = '';
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell' + ((r + c) % 2 === 1 ? ' dark' : '');
+        if (lastMove && ((lastMove[0] === r && lastMove[1] === c) || (lastMove[2] === r && lastMove[3] === c))) {
+          cell.classList.add('last-move');
+        }
+        if (cursor[0] === r && cursor[1] === c) {
+          cell.classList.add('cursor');
+        }
+        if (validMoves.some(([vr, vc]) => vr === r && vc === c)) {
+          cell.classList.add('valid');
+        }
+        cell.onclick = () => handleCellClick(r, c);
+
+        const val = board[r][c];
+        if (val !== EMPTY) {
+          const piece = document.createElement('div');
+          piece.className = 'piece ' + (val === P1 ? 'p1' : val === P2 ? 'p2' : 'neutron');
+          if (selected && selected[0] === r && selected[1] === c) {
+            piece.classList.add('selected');
+          }
+          cell.appendChild(piece);
+        }
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  // --- AI MINIMAX ---
+  function cloneBoard(b) { return b.map(r => [...r]); }
+
+  function getAllTurnActions(b, player) {
+    const actions = [];
+    const [nr, nc] = findNeutron(b);
+    const nMoves = getSlideDestinations(b, nr, nc);
+
+    for (const [ntr, ntc] of nMoves) {
+      const b1 = cloneBoard(b);
+      b1[nr][nc] = EMPTY;
+      b1[ntr][ntc] = NEUTRON;
+
+      if (checkWin(b1) === player) {
+        actions.push({ nFrom: [nr, nc], nTo: [ntr, ntc], pFrom: null, pTo: null, board: b1 });
+        continue;
+      }
+      if (checkWin(b1) !== 0) continue;
+
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          if (b1[r][c] === player) {
+            for (const [ptr, ptc] of getSlideDestinations(b1, r, c)) {
+              const b2 = cloneBoard(b1);
+              b2[r][c] = EMPTY;
+              b2[ptr][ptc] = player;
+              actions.push({ nFrom: [nr, nc], nTo: [ntr, ntc], pFrom: [r, c], pTo: [ptr, ptc], board: b2 });
+            }
+          }
+        }
+      }
+    }
+    return actions;
+  }
+
+  function evaluateBoard(b, aiSide) {
+    const win = checkWin(b);
+    if (win === aiSide) return 10000;
+    if (win !== 0) return -10000;
+
+    const [nr, nc] = findNeutron(b);
+    const targetRow = aiSide === P1 ? 0 : 4;
+    const distScore = (4 - Math.abs(targetRow - nr)) * 35;
+
+    let mobilityScore = 0;
+    for (const [mr] of getSlideDestinations(b, nr, nc)) {
+      if (mr === targetRow) mobilityScore += 140;
+      if (mr === (4 - targetRow)) mobilityScore -= 140;
+    }
+    return distScore + mobilityScore + (Math.random() * 8 - 4);
+  }
+
+  function minimax(b, depth, alpha, beta, maximizing, aiSide) {
+    const oppSide = aiSide === P1 ? P2 : P1;
+    const win = checkWin(b);
+    if (win === aiSide) return 10000 + depth;
+    if (win === oppSide) return -10000 - depth;
+    if (depth === 0) return evaluateBoard(b, aiSide);
+
+    const player = maximizing ? aiSide : oppSide;
+    const actions = getAllTurnActions(b, player);
+    if (actions.length === 0) return maximizing ? -9000 : 9000;
+
+    if (maximizing) {
+      let maxEval = -Infinity;
+      for (const act of actions) {
+        const ev = minimax(act.board, depth - 1, alpha, beta, false, aiSide);
+        maxEval = Math.max(maxEval, ev);
+        alpha = Math.max(alpha, ev);
+        if (beta <= alpha) break;
+      }
+      return maxEval;
+    } else {
+      let minEval = Infinity;
+      for (const act of actions) {
+        const ev = minimax(act.board, depth - 1, alpha, beta, true, aiSide);
+        minEval = Math.min(minEval, ev);
+        beta = Math.min(beta, ev);
+        if (beta <= alpha) break;
+      }
+      return minEval;
+    }
+  }
+
+  function playAITurn() {
+    if (gameOver || mode !== 'ai' || turn === humanSide) return;
+    const aiSide = humanSide === P1 ? P2 : P1;
+    const depth = parseInt(document.getElementById('diffSelect').value, 10);
+
+    if (isFirstTurn && aiSide === P1) {
+      const openingMoves = [];
+      for (let c = 0; c < 5; c++) {
+        for (const [tr, tc] of getSlideDestinations(board, 4, c)) {
+          openingMoves.push({ pFrom: [4, c], pTo: [tr, tc] });
+        }
+      }
+      const pick = openingMoves[Math.floor(Math.random() * openingMoves.length)];
+      animateAndExecute(pick.pFrom[0], pick.pFrom[1], pick.pTo[0], pick.pTo[1]);
+      return;
+    }
+
+    const actions = getAllTurnActions(board, aiSide);
+    if (actions.length === 0) {
+      const [nr, nc] = findNeutron(board);
+      const nMoves = getSlideDestinations(board, nr, nc);
+      if (nMoves.length > 0) {
+        const [ntr, ntc] = nMoves[0];
+        animateAndExecute(nr, nc, ntr, ntc);
+      } else {
+        endGame(humanSide, "AI blocked");
+      }
+      return;
+    }
+
+    let bestAct = actions[0];
+    let bestScore = -Infinity;
+    for (const act of actions) {
+      const score = minimax(act.board, depth, -Infinity, Infinity, false, aiSide);
+      if (score > bestScore) {
+        bestScore = score;
+        bestAct = act;
+      }
+    }
+
+    animateAndExecute(bestAct.nFrom[0], bestAct.nFrom[1], bestAct.nTo[0], bestAct.nTo[1], () => {
+      if (!gameOver && bestAct.pFrom) {
+        setTimeout(() => {
+          animateAndExecute(bestAct.pFrom[0], bestAct.pFrom[1], bestAct.pTo[0], bestAct.pTo[1]);
+        }, 250);
+      }
+    });
+  }
+
+  // --- ONLINE SYNC (FIREBASE / SUPABASE) ---
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function serializeState() {
+    return {
+      board, turn, phase, isFirstTurn, gameOver, scores, moveHistory, lastMove,
+      updatedAt: Date.now()
+    };
+  }
+
+  function applyRemoteState(state) {
+    if (!state || !state.board) return;
+    const hash = JSON.stringify(state);
+    if (hash === lastSyncedHash) return;
+    lastSyncedHash = hash;
+
+    const prevTurn = turn;
+    const prevGameOver = gameOver;
+    const prevMoveCount = moveHistory.length;
+
+    board = state.board;
+    turn = state.turn;
+    phase = state.phase;
+    isFirstTurn = state.isFirstTurn;
+    gameOver = state.gameOver;
+    scores = state.scores || { 1: 0, 2: 0 };
+    moveHistory = state.moveHistory || [];
+    lastMove = state.lastMove || null;
+    selected = null;
+    validMoves = [];
+
+    if (!gameOver && currentRoom && turn === currentRoom.side && phase === 'NEUTRON') {
+      const [nr, nc] = findNeutron(board);
+      selected = [nr, nc];
+      validMoves = getSlideDestinations(board, nr, nc);
+    }
+
+    updateScoreDisplay();
+    updateNewGameButton();
+    renderHistory();
+    updateStatus();
+    render();
+
+    const isMyTurnNow = !gameOver && currentRoom && turn === currentRoom.side;
+    const becameMyTurn = isMyTurnNow && (
+      prevTurn !== currentRoom.side ||
+      (prevGameOver && !gameOver) ||
+      (moveHistory.length === 0 && prevMoveCount > 0)
+    );
+
+    if (becameMyTurn) {
+      triggerMyTurnNotification();
+    } else if (!prevGameOver && gameOver) {
+      playTone(440, 0.15);
+      setTimeout(() => playTone(554, 0.28), 160);
+      stopTitleBlink();
+    } else {
+      playTone(660, 0.06);
+    }
+  }
+
+  async function connectRoom() {
+    const roomId = document.getElementById('roomInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const pass = document.getElementById('passInput').value;
+    const side = parseInt(document.getElementById('onlineSideSelect').value, 10);
+
+    if (!roomId || !pass) {
+      updateStatus("⚠️ Please enter a room name and a password.");
+      return;
+    }
+    if (cloudConfig.provider === 'firebase' && !cloudConfig.fbUrl) {
+      openModal('cloudModal');
+      return;
+    }
+    if (cloudConfig.provider === 'supabase' && (!cloudConfig.sbUrl || !cloudConfig.sbKey)) {
+      openModal('cloudModal');
+      return;
+    }
+
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+
+    disconnectRoom();
+    const passHash = await sha256(roomId + ":" + pass);
+    currentRoom = { id: roomId, pass, passHash, side };
+
+    const badge = document.getElementById('onlineStatusBadge');
+    badge.textContent = "Connecting...";
+    badge.classList.remove('connected');
+
+    try {
+      const existing = await fetchRemoteRoom(roomId);
+      if (!existing) {
+        initGame(true);
+        await saveRemoteRoom(roomId, passHash, serializeState());
+        lastSyncedHash = JSON.stringify(serializeState());
+      } else {
+        if (existing.pass_hash !== passHash) {
+          currentRoom = null;
+          badge.textContent = "Wrong password";
+          updateStatus("❌ Incorrect password for this room.");
+          return;
+        }
+        applyRemoteState(existing.state);
+      }
+
+      badge.textContent = `Connected: ${roomId} (${side === 1 ? 'Blue' : 'Red'})`;
+      badge.classList.add('connected');
+      document.getElementById('shareBtn').style.display = 'inline-block';
+      saveRecentRoom(roomId, pass, side);
+      startListeningRoom();
+      updateUndoBtn();
+      updateNewGameButton();
+      updateStatus();
+      render();
+    } catch (err) {
+      badge.textContent = "Network error";
+      updateStatus("❌ Cloud connection error: please check your URL/key in Cloud Setup.");
+    }
+  }
+
+  function disconnectRoom() {
+    if (pollTimer) clearInterval(pollTimer);
+    if (sseSource) sseSource.close();
+    pollTimer = null;
+    sseSource = null;
+    currentRoom = null;
+    stopTitleBlink();
+    document.getElementById('shareBtn').style.display = 'none';
+    const badge = document.getElementById('onlineStatusBadge');
+    badge.textContent = "Offline";
+    badge.classList.remove('connected');
+    updateNewGameButton();
+  }
+
+  async function fetchRemoteRoom(roomId) {
+    if (cloudConfig.provider === 'firebase') {
+      const res = await fetch(`${cloudConfig.fbUrl}/rooms/${roomId}.json`);
+      if (!res.ok) throw new Error("Firebase error");
+      return await res.json();
+    } else {
+      const res = await fetch(`${cloudConfig.sbUrl}/rest/v1/coneutron_rooms?id=eq.${roomId}&select=*`, {
+        headers: {
+          'apikey': cloudConfig.sbKey,
+          'Authorization': `Bearer ${cloudConfig.sbKey}`
+        }
+      });
+      if (!res.ok) throw new Error("Supabase error");
+      const rows = await res.json();
+      return rows.length ? rows[0] : null;
+    }
+  }
+
+  async function saveRemoteRoom(roomId, passHash, state) {
+    if (cloudConfig.provider === 'firebase') {
+      await fetch(`${cloudConfig.fbUrl}/rooms/${roomId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pass_hash: passHash, state })
+      });
+    } else {
+      await fetch(`${cloudConfig.sbUrl}/rest/v1/coneutron_rooms`, {
+        method: 'POST',
+        headers: {
+          'apikey': cloudConfig.sbKey,
+          'Authorization': `Bearer ${cloudConfig.sbKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({ id: roomId, pass_hash: passHash, state, updated_at: new Date().toISOString() })
+      });
+    }
+  }
+
+  async function pushOnlineState() {
+    if (!currentRoom) return;
+    const st = serializeState();
+    lastSyncedHash = JSON.stringify(st);
+    await saveRemoteRoom(currentRoom.id, currentRoom.passHash, st);
+  }
+
+  function startListeningRoom() {
+    if (!currentRoom) return;
+    if (cloudConfig.provider === 'firebase' && typeof EventSource !== 'undefined') {
+      sseSource = new EventSource(`${cloudConfig.fbUrl}/rooms/${currentRoom.id}/state.json`);
+      sseSource.addEventListener('put', (e) => {
+        try {
+          const payload = JSON.parse(e.data);
+          if (payload && payload.data) applyRemoteState(payload.data);
+        } catch (_) {}
+      });
+    }
+    pollTimer = setInterval(async () => {
+      if (!currentRoom) return;
+      try {
+        const data = await fetchRemoteRoom(currentRoom.id);
+        if (data && data.state) applyRemoteState(data.state);
+      } catch (_) {}
+    }, 2500);
+  }
+
+  // --- RECENT ROOMS & SHARE LINK ---
+  function saveRecentRoom(id, pass, side) {
+    let list = JSON.parse(localStorage.getItem('coneutron_recent_rooms') || '[]');
+    list = list.filter(r => r.id !== id);
+    list.unshift({ id, pass, side, date: new Date().toLocaleDateString('en-US') });
+    localStorage.setItem('coneutron_recent_rooms', JSON.stringify(list.slice(0, 8)));
+    renderRecentRooms();
+  }
+
+  function removeRecentRoom(id) {
+    let list = JSON.parse(localStorage.getItem('coneutron_recent_rooms') || '[]');
+    list = list.filter(r => r.id !== id);
+    localStorage.setItem('coneutron_recent_rooms', JSON.stringify(list));
+    renderRecentRooms();
+  }
+
+  function loadRecentRoom(id, pass, side) {
+    document.getElementById('roomInput').value = id;
+    document.getElementById('passInput').value = pass;
+    document.getElementById('onlineSideSelect').value = String(side);
+    connectRoom();
+  }
+
+  function renderRecentRooms() {
+    const container = document.getElementById('recentRoomsContainer');
+    const list = JSON.parse(localStorage.getItem('coneutron_recent_rooms') || '[]');
+    container.innerHTML = '';
+    if (list.length === 0) {
+      const emptyMsg = document.createElement('span');
+      emptyMsg.style.color = 'var(--muted)';
+      emptyMsg.textContent = "No recent rooms saved on this device.";
+      container.appendChild(emptyMsg);
+      return;
+    }
+    const label = document.createElement('span');
+    label.style.color = 'var(--muted)';
+    label.style.fontWeight = '600';
+    label.textContent = "My rooms:";
+    container.appendChild(label);
+
+    list.forEach(r => {
+      const chip = document.createElement('div');
+      chip.className = 'room-chip';
+      const sideLabel = r.side === 1 ? 'Blue' : 'Red';
+
+      const info = document.createElement('span');
+      const strong = document.createElement('strong');
+      strong.textContent = r.id;
+      info.appendChild(strong);
+      info.append(` (${sideLabel} • ${r.date})`);
+
+      const joinBtn = document.createElement('button');
+      joinBtn.textContent = '▶';
+      joinBtn.title = 'Join';
+      joinBtn.onclick = () => loadRecentRoom(r.id, r.pass, r.side);
+
+      const delBtn = document.createElement('button');
+      delBtn.textContent = '×';
+      delBtn.title = 'Delete';
+      delBtn.onclick = () => removeRecentRoom(r.id);
+
+      chip.append(info, joinBtn, delBtn);
+      container.appendChild(chip);
+    });
+  }
+
+  function shareInviteLink() {
+    if (!currentRoom) return;
+    const oppSide = currentRoom.side === 1 ? 2 : 1;
+    const params = new URLSearchParams();
+    params.set('room', currentRoom.id);
+    params.set('pass', currentRoom.pass);
+    params.set('side', oppSide);
+    if (cloudConfig.provider === 'firebase' && cloudConfig.fbUrl) {
+      params.set('fb', cloudConfig.fbUrl);
+    } else if (cloudConfig.provider === 'supabase' && cloudConfig.sbUrl && cloudConfig.sbKey) {
+      params.set('sbUrl', cloudConfig.sbUrl);
+      params.set('sbKey', cloudConfig.sbKey);
+    }
+    const inviteUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      updateStatus("🔗 Invite link copied to clipboard! Send it to your opponent.");
+    }).catch(() => {
+      prompt("Copy this invite link:", inviteUrl);
+    });
+  }
+
+  function checkInviteUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    const pass = params.get('pass');
+    const side = params.get('side');
+    if (params.get('fb')) {
+      cloudConfig = { provider: 'firebase', fbUrl: params.get('fb'), sbUrl: '', sbKey: '' };
+      localStorage.setItem('coneutron_cloud', JSON.stringify(cloudConfig));
+    } else if (params.get('sbUrl') && params.get('sbKey')) {
+      cloudConfig = { provider: 'supabase', fbUrl: '', sbUrl: params.get('sbUrl'), sbKey: params.get('sbKey') };
+      localStorage.setItem('coneutron_cloud', JSON.stringify(cloudConfig));
+    }
+    if (room && pass) {
+      document.getElementById('modeSelect').value = 'online';
+      onModeChange();
+      document.getElementById('roomInput').value = room;
+      document.getElementById('passInput').value = pass;
+      if (side) document.getElementById('onlineSideSelect').value = side;
+      setTimeout(connectRoom, 200);
+      return true;
+    }
+    return false;
+  }
+
+  // --- KEYBOARD SHORTCUTS ---
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
+      return;
+    }
+    if (document.querySelector('.modal-backdrop.open')) return;
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+    const key = e.key.toLowerCase();
+    if (e.key === 'ArrowUp') { e.preventDefault(); cursor[0] = (cursor[0] + 4) % 5; render(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); cursor[0] = (cursor[0] + 1) % 5; render(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); cursor[1] = (cursor[1] + 4) % 5; render(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); cursor[1] = (cursor[1] + 1) % 5; render(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick(cursor[0], cursor[1]); }
+    else if (key === 'z') undoMove();
+    else if (key === 'n') handleNewGameClick();
+    else if (key === 'm') toggleSound();
+    else if (key === 't') toggleTheme();
+    else if (key === 'f') toggleFullscreen();
+    else if (key === 'h') openModal('rulesModal');
+    else if (key === 's') openModal('strategyModal');
+  });
+
+  if (!checkInviteUrl()) {
+    onModeChange();
+  }
+</script>
+</body>
+</html>
