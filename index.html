@@ -3,140 +3,165 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CoNeutron Online (Synchrone & Asynchrone)</title>
+<title>CoNeutron — Jeu de stratégie (Local & En Ligne)</title>
 <style>
   :root {
     --bg: #0f172a;
     --panel: #1e293b;
-    --panel-alt: #0b1120;
-    --border: #334155;
+    --panel-alt: #263348;
     --cell-light: #334155;
     --cell-dark: #283548;
     --p1: #38bdf8;
     --p2: #f43f5e;
     --neutron: #facc15;
     --valid: rgba(74, 222, 128, 0.35);
-    --last-move: rgba(250, 204, 21, 0.25);
+    --last-move: rgba(250, 204, 21, 0.28);
     --text: #f8fafc;
     --muted: #94a3b8;
-    --accent: #2563eb;
-    --success: #10b981;
+    --border: #475569;
   }
 
-  body.light {
+  body.light-theme {
     --bg: #f1f5f9;
     --panel: #ffffff;
-    --panel-alt: #e2e8f0;
-    --border: #cbd5e1;
-    --cell-light: #e2e8f0;
-    --cell-dark: #cbd5e1;
+    --panel-alt: #f8fafc;
+    --cell-light: #cbd5e1;
+    --cell-dark: #94a3b8;
     --p1: #0284c7;
     --p2: #e11d48;
     --neutron: #eab308;
     --valid: rgba(22, 163, 74, 0.35);
-    --last-move: rgba(234, 179, 8, 0.3);
+    --last-move: rgba(234, 179, 8, 0.32);
     --text: #0f172a;
     --muted: #475569;
-    --accent: #2563eb;
-    --success: #059669;
+    --border: #cbd5e1;
   }
 
   * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
   body {
     margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
-    display: flex; flex-direction: column; align-items: center; padding: 16px;
+    display: flex; flex-direction: column; align-items: center; padding: 14px;
     transition: background 0.2s, color 0.2s;
   }
 
   header {
-    width: 100%; max-width: 980px; display: flex; justify-content: space-between;
-    align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+    width: 100%; max-width: 860px; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;
   }
-  h1 { margin: 0; font-size: 1.65rem; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
-  .badge {
-    font-size: 0.72rem; padding: 3px 8px; border-radius: 999px;
-    background: var(--accent); color: #fff; text-transform: uppercase; letter-spacing: 0.8px;
-  }
+  h1 { margin: 0; font-size: 1.65rem; letter-spacing: 0.5px; }
 
-  .toolbar {
-    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
-  }
-  select, button, input {
+  .toolbar { display: flex; gap: 6px; flex-wrap: wrap; }
+  button, select, input {
     background: var(--panel); color: var(--text); border: 1px solid var(--border);
-    padding: 7px 12px; border-radius: 8px; font-size: 0.9rem;
+    padding: 7px 12px; border-radius: 8px; font-size: 0.9rem; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
   }
-  button, select { cursor: pointer; }
-  button:hover, select:hover { border-color: var(--p1); }
+  input { cursor: text; }
+  button:hover, select:hover, input:focus { border-color: var(--p1); outline: none; }
+  button.primary { background: #2563eb; border-color: #3b82f6; color: #fff; font-weight: 600; }
+  button.primary:hover { background: #1d4ed8; }
+  button.share-btn { background: #059669; border-color: #10b981; color: #fff; font-weight: 600; }
+  button.share-btn:hover { background: #047857; }
   button:disabled { opacity: 0.45; cursor: not-allowed; }
-  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
-  button.success { background: var(--success); border-color: var(--success); color: #fff; font-weight: 600; }
 
-  .main-grid {
-    display: grid; grid-template-columns: 1fr 330px; gap: 18px;
-    width: 100%; max-width: 980px; align-items: start;
-  }
-  @media (max-width: 860px) {
-    .main-grid { grid-template-columns: 1fr; }
+  .controls-bar {
+    width: 100%; max-width: 860px; background: var(--panel); padding: 10px 14px;
+    border-radius: 12px; display: flex; flex-wrap: wrap; gap: 8px;
+    align-items: center; justify-content: center; margin-bottom: 12px;
+    border: 1px solid var(--border);
   }
 
-  .card {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-    padding: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  .online-panel {
+    width: 100%; max-width: 860px; background: var(--panel); padding: 12px 14px;
+    border-radius: 12px; margin-bottom: 12px; border: 1px solid var(--border);
+    display: none; flex-direction: column; gap: 10px;
+  }
+  .online-panel.active { display: flex; }
+  .online-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .online-badge {
+    font-size: 0.8rem; padding: 3px 8px; border-radius: 999px;
+    background: var(--panel-alt); border: 1px solid var(--border);
+  }
+  .online-badge.connected { border-color: #22c55e; color: #22c55e; }
+
+  .recent-rooms {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+    padding-top: 6px; border-top: 1px dashed var(--border); font-size: 0.85rem;
+  }
+  .room-chip {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--panel-alt); border: 1px solid var(--border);
+    padding: 4px 8px; border-radius: 8px;
+  }
+  .room-chip button { padding: 2px 6px; font-size: 0.8rem; }
+
+  .scoreboard {
+    width: 100%; max-width: 860px; display: flex; justify-content: space-between;
+    align-items: center; background: var(--panel); padding: 8px 16px;
+    border-radius: 10px; margin-bottom: 12px; border: 1px solid var(--border);
+    font-weight: 600;
+  }
+  .score-p1 { color: var(--p1); }
+  .score-p2 { color: var(--p2); }
+
+  .status {
+    width: 100%; max-width: 860px; background: var(--panel); padding: 11px 16px;
+    border-radius: 10px; margin-bottom: 14px; font-weight: 600; font-size: 1rem;
+    border-left: 5px solid var(--p1); text-align: center; border-top: 1px solid var(--border);
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border);
   }
 
-  .status-bar {
-    padding: 11px 16px; border-radius: 10px; background: var(--panel-alt);
-    border-left: 5px solid var(--p1); font-weight: 600; margin-bottom: 14px;
-    display: flex; justify-content: space-between; align-items: center; gap: 8px;
-  }
-  .sync-pill {
-    font-size: 0.78rem; padding: 3px 9px; border-radius: 999px;
-    background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid var(--success);
-    white-space: nowrap;
-  }
-  .sync-pill.offline {
-    background: rgba(148, 163, 184, 0.15); color: var(--muted); border-color: var(--border);
+  .main-layout {
+    width: 100%; max-width: 860px; display: flex; flex-wrap: wrap;
+    gap: 18px; justify-content: center; align-items: flex-start;
   }
 
   .board-container {
-    display: flex; flex-direction: column; align-items: center;
+    background: var(--panel); padding: 12px; border-radius: 14px;
+    border: 1px solid var(--border); box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+    position: relative;
   }
+
   .goal-label {
-    font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-    letter-spacing: 1.4px; margin: 4px 0;
+    text-align: center; font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 1.4px; padding: 4px 0; font-weight: 700;
   }
   .goal-top { color: var(--p1); }
   .goal-bottom { color: var(--p2); }
 
-  .board-frame {
-    position: relative; padding: 8px; background: var(--panel-alt);
-    border-radius: 12px; border: 1px solid var(--border);
+  .board-grid-wrap { display: flex; align-items: center; gap: 6px; }
+  .coords-col {
+    display: flex; flex-direction: column; justify-content: space-around;
+    height: 336px; font-size: 0.78rem; color: var(--muted); font-weight: 600;
   }
+  .coords-row {
+    display: flex; justify-content: space-around; padding-left: 18px;
+    font-size: 0.78rem; color: var(--muted); font-weight: 600; margin-top: 4px;
+  }
+
   .board {
-    display: grid; grid-template-columns: repeat(5, 62px); grid-template-rows: repeat(5, 62px);
-    gap: 4px; position: relative;
+    position: relative; display: grid;
+    grid-template-columns: repeat(5, 64px); grid-template-rows: repeat(5, 64px);
+    gap: 4px; background: #0f172a; padding: 4px; border-radius: 8px;
   }
+
   .cell {
-    width: 62px; height: 62px; background: var(--cell-light); border-radius: 6px;
+    width: 64px; height: 64px; background: var(--cell-light); border-radius: 6px;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
     position: relative;
   }
   .cell.dark { background: var(--cell-dark); }
-  .cell.last-move { box-shadow: inset 0 0 0 3px var(--neutron); }
-  .cell.cursor { outline: 3px dashed var(--text); outline-offset: -4px; }
+  .cell.last-move { background: var(--last-move); }
+  .cell.cursor { outline: 3px solid #f8fafc; z-index: 2; }
   .cell.valid::after {
     content: ""; width: 20px; height: 20px; border-radius: 50%;
-    background: #4ade80; box-shadow: 0 0 10px #4ade80;
+    background: #4ade80; box-shadow: 0 0 8px #4ade80;
   }
   .cell.valid:hover { background: var(--valid); }
-  .coord {
-    position: absolute; bottom: 2px; right: 4px; font-size: 0.62rem;
-    color: var(--muted); pointer-events: none; opacity: 0.7;
-  }
 
   .piece {
-    width: 44px; height: 44px; border-radius: 50%;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.35); transition: transform 0.15s;
+    width: 46px; height: 46px; border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4); transition: transform 0.15s;
   }
   .piece.p1 { background: radial-gradient(circle at 30% 30%, #7dd3fc, var(--p1)); }
   .piece.p2 { background: radial-gradient(circle at 30% 30%, #fda4af, var(--p2)); }
@@ -145,251 +170,212 @@
     border: 3px solid #fff;
   }
   .piece.selected {
-    transform: scale(1.12); box-shadow: 0 0 0 4px #fff, 0 6px 14px rgba(0,0,0,0.5);
+    transform: scale(1.12);
+    box-shadow: 0 0 0 4px #ffffff, 0 6px 14px rgba(0,0,0,0.6);
   }
 
-  .anim-layer {
-    position: absolute; top: 8px; left: 8px; width: 326px; height: 326px;
-    pointer-events: none; z-index: 10;
-  }
   .anim-piece {
-    position: absolute; width: 44px; height: 44px; border-radius: 50%;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.45);
+    position: absolute; width: 46px; height: 46px; border-radius: 50%;
+    pointer-events: none; z-index: 10; box-shadow: 0 6px 14px rgba(0,0,0,0.5);
   }
 
-  .sidebar { display: flex; flex-direction: column; gap: 14px; }
-  .section-title {
-    font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;
-    color: var(--muted); margin: 0 0 10px 0; font-weight: 700;
-    display: flex; justify-content: space-between; align-items: center;
+  .history-panel {
+    flex: 1; min-width: 240px; max-width: 340px; background: var(--panel);
+    border-radius: 14px; padding: 12px; border: 1px solid var(--border);
+    display: flex; flex-direction: column; height: 416px;
   }
-
-  .online-box { display: flex; flex-direction: column; gap: 8px; }
-  .row { display: flex; gap: 6px; }
-  .row input { flex: 1; min-width: 0; }
-  .room-info {
-    background: var(--panel-alt); padding: 10px; border-radius: 8px;
-    font-size: 0.83rem; border: 1px solid var(--border); line-height: 1.45;
+  .history-header {
+    font-weight: 700; font-size: 0.95rem; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border); margin-bottom: 8px;
+    display: flex; justify-content: space-between;
   }
-  .room-info code {
-    background: rgba(56, 189, 248, 0.15); color: var(--p1);
-    padding: 2px 5px; border-radius: 4px; font-weight: 700;
-  }
-
-  .score-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px; text-align: center;
-  }
-  .score-item {
-    background: var(--panel-alt); padding: 8px; border-radius: 8px; border: 1px solid var(--border);
-  }
-  .score-val { font-size: 1.35rem; font-weight: 800; }
-
   .history-list {
-    max-height: 185px; overflow-y: auto; background: var(--panel-alt);
-    border-radius: 8px; padding: 8px; border: 1px solid var(--border);
-    font-size: 0.84rem; display: flex; flex-direction: column; gap: 4px;
+    flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 4px;
+    font-size: 0.85rem;
   }
-  .hist-entry {
-    display: flex; justify-content: space-between; padding: 4px 6px;
-    border-radius: 5px; background: rgba(255,255,255,0.03);
+  .move-item {
+    padding: 5px 8px; border-radius: 6px; background: var(--panel-alt);
+    display: flex; justify-content: space-between;
   }
 
   /* Modals */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,0.65);
-    display: none; align-items: center; justify-content: center; padding: 16px; z-index: 50;
+    display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
   }
   .modal-backdrop.open { display: flex; }
   .modal {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
-    max-width: 540px; width: 100%; padding: 20px; max-height: 90vh; overflow-y: auto;
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    border-radius: 14px; max-width: 480px; width: 100%; padding: 20px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
   }
   .modal h2 { margin-top: 0; font-size: 1.25rem; }
-  .modal label { display: block; font-size: 0.82rem; color: var(--muted); margin: 10px 0 4px; }
-  .modal textarea, .modal input[type="text"], .modal input[type="password"] {
-    width: 100%; background: var(--panel-alt); color: var(--text);
-    border: 1px solid var(--border); border-radius: 8px; padding: 8px; font-family: monospace;
-  }
+  .form-group { margin-bottom: 12px; display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 0.85rem; color: var(--muted); font-weight: 600; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-  .help-note { font-size: 0.8rem; color: var(--muted); line-height: 1.4; margin-top: 8px; }
+  pre.sql-box {
+    background: #0f172a; color: #e2e8f0; padding: 10px; border-radius: 8px;
+    font-size: 0.75rem; overflow-x: auto; user-select: all;
+  }
+
+  @media (max-width: 440px) {
+    .board { grid-template-columns: repeat(5, 52px); grid-template-rows: repeat(5, 52px); }
+    .cell { width: 52px; height: 52px; }
+    .piece, .anim-piece { width: 38px; height: 38px; }
+    .coords-col { height: 276px; }
+  }
 </style>
 </head>
 <body>
 
 <header>
-  <h1>CoNeutron <span class="badge">Sync & Async</span></h1>
+  <h1>CoNeutron</h1>
   <div class="toolbar">
-    <select id="modeSelect" onchange="onModeChange()">
-      <option value="online">🌐 En ligne (Direct / Différé)</option>
-      <option value="ai">🤖 1 Joueur vs IA</option>
-      <option value="pvp">👥 2 Joueurs (Local)</option>
-    </select>
-    <select id="sideSelect" title="Votre camp">
-      <option value="1">Camp : Bleu (1er)</option>
-      <option value="2">Camp : Rouge (2e)</option>
-    </select>
-    <select id="diffSelect" title="Difficulté IA">
-      <option value="1">IA : Facile</option>
-      <option value="2" selected>IA : Moyen</option>
-      <option value="3">IA : Difficile</option>
-    </select>
-    <button onclick="newGame()" title="Nouvelle partie (N)">🔄 Nouvelle</button>
-    <button id="undoBtn" onclick="undoMove()" title="Annuler (Z)">↩️ Annuler</button>
-    <button id="soundBtn" onclick="toggleSound()" title="Son (M)">🔊</button>
-    <button onclick="toggleTheme()" title="Thème (T)">🌓</button>
-    <button onclick="openModal('rulesModal')" title="Règles (H)">📖</button>
+    <button id="soundBtn" onclick="toggleSound()" title="Activer/Couper le son (M)">🔊 Sons</button>
+    <button id="themeBtn" onclick="toggleTheme()" title="Changer de thème (T)">☀️ Thème</button>
+    <button onclick="toggleFullscreen()" title="Plein écran (F)">⛶ Plein Écran</button>
+    <button onclick="openModal('rulesModal')" title="Règles du jeu (H)">📖 Règles</button>
+    <button onclick="openModal('cloudModal')">⚙️ Config Cloud</button>
   </div>
 </header>
 
-<div class="main-grid">
-  <div class="card">
-    <div class="status-bar" id="statusBar">
-      <span id="statusText">Initialisation...</span>
-      <span class="sync-pill offline" id="syncBadge">Mode Local</span>
-    </div>
+<div class="controls-bar">
+  <select id="modeSelect" onchange="onModeChange()">
+    <option value="ai">1 Joueur vs IA</option>
+    <option value="pvp">2 Joueurs (Local)</option>
+    <option value="online">En Ligne (Direct & Différé)</option>
+  </select>
 
-    <div class="board-container">
-      <div class="goal-label goal-top">▲ Cible Joueur 1 (Bleu) ▲</div>
-      <div class="board-frame">
-        <div class="board" id="board"></div>
-        <div class="anim-layer" id="animLayer"></div>
-      </div>
-      <div class="goal-label goal-bottom">▼ Cible Joueur 2 (Rouge) ▼</div>
-    </div>
-  </div>
+  <select id="diffSelect">
+    <option value="1">IA : Facile</option>
+    <option value="2" selected>IA : Moyen</option>
+    <option value="3">IA : Difficile</option>
+  </select>
 
-  <div class="sidebar">
-    <!-- Panneau En Ligne (Supabase / Firebase REST) -->
-    <div class="card" id="onlineCard">
-      <div class="section-title">
-        <span>Salon En Ligne (Sync & Async)</span>
-        <button onclick="openModal('configModal')" style="padding:3px 8px;font-size:0.75rem;">⚙️ Config Cloud</button>
-      </div>
+  <select id="sideSelect" onchange="initGame()">
+    <option value="1">Camp : Bleu (1er)</option>
+    <option value="2">Camp : Rouge (2e)</option>
+  </select>
 
-      <div class="online-box" id="lobbyControls">
-        <div class="row">
-          <input type="text" id="roomCodeInput" placeholder="Code salon (ex: TOURNOI1)" maxlength="20">
-        </div>
-        <div class="row">
-          <input type="password" id="roomPassInput" placeholder="Mot de passe du salon">
-        </div>
-        <div class="row">
-          <button class="primary" style="flex:1" onclick="createOnlineRoom()">Créer Salon</button>
-          <button class="success" style="flex:1" onclick="joinOnlineRoom()">Rejoindre / Reprendre</button>
-        </div>
-        <div class="help-note">
-          <strong>Direct & Différé :</strong> si les deux joueurs sont connectés, les coups s'affichent en direct. Sinon, la partie est sauvegardée avec son mot de passe pour être reprise plus tard.
-        </div>
-      </div>
-
-      <div class="room-info" id="activeRoomBox" style="display:none;">
-        <div>Salon : <code id="displayRoomCode">---</code> | Vous : <strong id="displayMyRole">---</strong></div>
-        <div style="margin-top:4px;color:var(--muted);" id="displaySyncDetail">Synchronisé avec le serveur</div>
-        <div class="row" style="margin-top:8px;">
-          <button onclick="manualRefreshRoom()" style="flex:1;font-size:0.8rem;">🔄 Actualiser</button>
-          <button onclick="copyShareInfo()" style="flex:1;font-size:0.8rem;">📋 Copier accès</button>
-          <button onclick="leaveOnlineRoom()" style="font-size:0.8rem;">Quitter</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Score -->
-    <div class="card">
-      <div class="section-title">
-        <span>Score Manches</span>
-        <button onclick="resetScores()" style="padding:2px 7px;font-size:0.72rem;">RAZ</button>
-      </div>
-      <div class="score-grid">
-        <div class="score-item">
-          <div style="font-size:0.78rem;color:var(--p1);font-weight:700;">BLEU (J1)</div>
-          <div class="score-val" id="scoreP1">0</div>
-        </div>
-        <div class="score-item">
-          <div style="font-size:0.78rem;color:var(--p2);font-weight:700;">ROUGE (J2)</div>
-          <div class="score-val" id="scoreP2">0</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Historique -->
-    <div class="card">
-      <div class="section-title">
-        <span>Historique des coups</span>
-        <span id="turnCounter" style="font-size:0.75rem;">Tour 1</span>
-      </div>
-      <div class="history-list" id="historyList"></div>
-    </div>
-  </div>
+  <button id="undoBtn" onclick="undoMove()" title="Annuler le dernier tour (Z)">↩ Annuler</button>
+  <button class="primary" onclick="initGame()" title="Nouvelle partie (N)">Nouvelle Partie</button>
 </div>
 
-<!-- Modal Configuration Firebase / Supabase -->
-<div class="modal-backdrop" id="configModal">
-  <div class="modal">
-    <h2>⚙️ Connexion Base de Données (Supabase ou Firebase)</h2>
-    <p class="help-note">
-      Pour activer les salons en ligne (direct et différé), renseignez l'URL de votre projet gratuit <strong>Supabase</strong> ou <strong>Firebase Realtime Database</strong>. Les paramètres sont mémorisés localement dans votre navigateur.
-    </p>
-
-    <label>Fournisseur Cloud</label>
-    <select id="providerSelect" onchange="toggleProviderFields()" style="width:100%;">
-      <option value="supabase">Supabase (PostgreSQL + Realtime)</option>
-      <option value="firebase">Firebase Realtime Database (REST + SSE)</option>
+<div class="online-panel" id="onlinePanel">
+  <div class="online-row">
+    <input type="text" id="roomInput" placeholder="Nom du salon (ex: duel42)" style="width: 170px;">
+    <input type="password" id="passInput" placeholder="Mot de passe" style="width: 150px;">
+    <select id="onlineSideSelect">
+      <option value="1">Jouer Bleu (1er)</option>
+      <option value="2">Jouer Rouge (2e)</option>
     </select>
+    <button class="primary" onclick="connectRoom()">Créer / Rejoindre</button>
+    <button class="share-btn" id="shareBtn" onclick="shareInviteLink()" style="display:none;">🔗 Partager l'invitation</button>
+    <span class="online-badge" id="onlineStatusBadge">Hors ligne</span>
+  </div>
+  <div class="recent-rooms" id="recentRoomsContainer"></div>
+</div>
 
-    <div id="supabaseFields">
-      <label>Supabase Project URL (ex: https://xyz.supabase.co)</label>
-      <input type="text" id="sbUrlInput" placeholder="https://votre-projet.supabase.co">
-      <label>Supabase Anon Public Key</label>
-      <input type="text" id="sbKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
-      <div class="help-note">
-        <strong>SQL à exécuter une fois dans Supabase (SQL Editor) :</strong>
-        <textarea rows="5" readonly>CREATE TABLE IF NOT EXISTS coneutron_rooms (
-  room_code TEXT PRIMARY KEY,
-  password_hash TEXT NOT NULL,
-  state JSONB NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-ALTER TABLE coneutron_rooms ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "public_rw" ON coneutron_rooms FOR ALL USING (true) WITH CHECK (true);</textarea>
+<div class="scoreboard">
+  <span class="score-p1">Bleu (J1) : <span id="scoreP1">0</span></span>
+  <button onclick="resetScores()" style="padding: 4px 10px; font-size: 0.8rem;">Réinitialiser scores</button>
+  <span class="score-p2">Rouge (J2) : <span id="scoreP2">0</span></span>
+</div>
+
+<div class="status" id="status">Initialisation...</div>
+
+<div class="main-layout">
+  <div class="board-container">
+    <div class="goal-label goal-top">▲ Cible Bleu (Ligne 5) ▲</div>
+    <div class="board-grid-wrap">
+      <div class="coords-col">
+        <span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
       </div>
+      <div class="board" id="board"></div>
     </div>
+    <div class="coords-row">
+      <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span>
+    </div>
+    <div class="goal-label goal-bottom">▼ Cible Rouge (Ligne 1) ▼</div>
+  </div>
 
-    <div id="firebaseFields" style="display:none;">
-      <label>Firebase Realtime Database URL (ex: https://mon-projet-default-rtdb.europe-west1.firebasedatabase.app)</label>
-      <input type="text" id="fbUrlInput" placeholder="https://votre-projet-default-rtdb.firebaseio.com">
-      <div class="help-note">
-        Dans Firebase Console &gt; Realtime Database &gt; Règles, autorisez la lecture/écriture sur le nœud <code>/rooms</code>.
-      </div>
+  <div class="history-panel">
+    <div class="history-header">
+      <span>Historique des coups</span>
+      <span id="turnCounter" style="color: var(--muted); font-weight: 500;">Tour 1</span>
     </div>
-
-    <div class="modal-actions">
-      <button onclick="closeModal('configModal')">Fermer</button>
-      <button class="primary" onclick="saveCloudConfig()">Enregistrer la configuration</button>
-    </div>
+    <div class="history-list" id="historyList"></div>
   </div>
 </div>
 
 <!-- Modal Règles -->
-<div class="modal-backdrop" id="rulesModal">
+<div class="modal-backdrop" id="rulesModal" onclick="if(event.target===this)closeModal('rulesModal')">
   <div class="modal">
-    <h2>📖 Règles de CoNeutron & Modes En Ligne</h2>
-    <ul style="line-height:1.55;padding-left:18px;font-size:0.92rem;">
-      <li><strong>Objectif inversé :</strong> Poussez le <strong>Neutron (jaune)</strong> jusqu'à la ligne de départ de votre adversaire (ligne 5 pour Bleu, ligne 1 pour Rouge). Vous gagnez aussi si l'adversaire est totalement bloqué.</li>
-      <li><strong>Glissade obligatoire :</strong> Chaque pièce glisse en ligne droite (orthogonale ou diagonale) jusqu'au bord du plateau ou jusqu'à rencontrer une autre pièce.</li>
-      <li><strong>Séquence de tour :</strong> Au tout 1er tour de la partie, Bleu déplace uniquement un pion bleu. Ensuite, chaque tour comporte 2 étapes : <strong>1) déplacer le Neutron</strong>, puis <strong>2) déplacer un de ses propres pions</strong>.</li>
-      <li><strong>Direct & Différé en ligne :</strong> Créez un salon avec un code et un mot de passe. Tant que l'onglet est ouvert, les coups de l'adversaire arrivent automatiquement (synchronisation temps réel). Vous pouvez aussi fermer la page et reprendre la partie plus tard avec le même code et mot de passe.</li>
-    </ul>
+    <h2>📖 Règles de CoNeutron</h2>
+    <p><strong>1. Objectif inversé :</strong> Poussez le <strong>Neutron (jaune)</strong> sur la ligne de départ de votre adversaire (ligne 5 pour Bleu, ligne 1 pour Rouge).</p>
+    <p><strong>2. Glissade obligatoire :</strong> Chaque pièce (pions et Neutron) glisse en ligne droite (horizontale, verticale ou diagonale) jusqu'au bord du plateau ou jusqu'à rencontrer un obstacle.</p>
+    <p><strong>3. Séquence en deux temps :</strong> À chaque tour, vous devez d'abord déplacer le <strong>Neutron</strong>, puis déplacer l'un de <strong>vos propres pions</strong>.</p>
+    <p><strong>4. Exception du 1er tour :</strong> Au tout premier tour de la partie, le joueur Bleu déplace uniquement un pion bleu (sans bouger le Neutron).</p>
+    <p><strong>5. Blocage :</strong> Si un joueur ne peut pas déplacer le Neutron ou aucun de ses pions lors de son tour, il perd la partie.</p>
     <div class="modal-actions">
       <button class="primary" onclick="closeModal('rulesModal')">Compris</button>
     </div>
   </div>
 </div>
 
+<!-- Modal Config Cloud -->
+<div class="modal-backdrop" id="cloudModal" onclick="if(event.target===this)closeModal('cloudModal')">
+  <div class="modal">
+    <h2>⚙️ Configuration Cloud (Gratuit)</h2>
+    <div class="form-group">
+      <label>Fournisseur de base de données</label>
+      <select id="cloudProvider" onchange="toggleCloudFields()">
+        <option value="firebase">Firebase Realtime Database</option>
+        <option value="supabase">Supabase (PostgreSQL)</option>
+      </select>
+    </div>
+    <div id="firebaseFields">
+      <div class="form-group">
+        <label>URL Firebase Realtime Database</label>
+        <input type="text" id="fbUrlInput" placeholder="https://votre-projet-default-rtdb.europe-west1.firebasedatabase.app">
+      </div>
+    </div>
+    <div id="supabaseFields" style="display:none;">
+      <div class="form-group">
+        <label>Supabase Project URL</label>
+        <input type="text" id="sbUrlInput" placeholder="https://xxxx.supabase.co">
+      </div>
+      <div class="form-group">
+        <label>Supabase Anon Public Key</label>
+        <input type="text" id="sbKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+      </div>
+      <div class="form-group">
+        <label>Script SQL à exécuter dans Supabase (SQL Editor)</label>
+        <pre class="sql-box">create table if not exists coneutron_rooms (
+  id text primary key,
+  pass_hash text not null,
+  state jsonb not null,
+  updated_at timestamptz default now()
+);
+alter table coneutron_rooms enable row level security;
+create policy "public_access" on coneutron_rooms for all using (true) with check (true);</pre>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeModal('cloudModal')">Annuler</button>
+      <button class="primary" onclick="saveCloudConfig()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // --- CONSTANTES & ÉTAT DU JEU ---
   const EMPTY = 0, P1 = 1, P2 = 2, NEUTRON = 3;
   const COLS = ['A', 'B', 'C', 'D', 'E'];
-  const DIRS = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+  const DIRS = [
+    [-1, -1], [-1, 0], [-1, 1],
+    [0, -1],           [0, 1],
+    [1, -1],  [1, 0],  [1, 1]
+  ];
 
   let board = [];
   let turn = P1;
@@ -398,109 +384,159 @@ CREATE POLICY "public_rw" ON coneutron_rooms FOR ALL USING (true) WITH CHECK (tr
   let selected = null;
   let validMoves = [];
   let gameOver = false;
-  let winner = 0;
-  let lastMove = null;
-  let history = [];
-  let undoStack = [];
+  let mode = 'ai';
+  let humanSide = P1;
   let scores = { 1: 0, 2: 0 };
-  let cursor = { r: 2, c: 2 };
+  let moveHistory = [];
+  let undoStack = [];
+  let lastMove = null;
+  let cursor = [2, 2];
   let isAnimating = false;
+
+  // Audio
   let soundEnabled = true;
-
-  // --- ÉTAT EN LIGNE (CLOUD) ---
-  let cloudConfig = JSON.parse(localStorage.getItem('coneutron_cloud_cfg') || 'null');
-  let onlineSession = null; // { roomCode, passHash, myPlayer: 1|2, lastUpdated }
-  let syncTimer = null;
-  let eventSource = null;
-
-  // --- AUDIO SYNTHÉTISÉ (WEB AUDIO API) ---
   let audioCtx = null;
-  function playTone(freq, type, duration, vol = 0.08) {
+
+  // Online state
+  let cloudConfig = JSON.parse(localStorage.getItem('coneutron_cloud') || '{"provider":"firebase","fbUrl":"","sbUrl":"","sbKey":""}');
+  let currentRoom = null;
+  let pollTimer = null;
+  let sseSource = null;
+  let lastSyncedHash = "";
+
+  function initAudio() {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (Ctx) audioCtx = new Ctx();
+    }
+  }
+
+  function playTone(freq, duration, type = 'sine', vol = 0.08) {
     if (!soundEnabled) return;
-    try {
-      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-      gain.gain.setValueAtTime(vol, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + duration);
-    } catch (e) {}
-  }
-  function soundSelect() { playTone(520, 'sine', 0.08, 0.06); }
-  function soundSlide(dist) { playTone(220 + dist * 45, 'triangle', 0.14 + dist * 0.03, 0.08); }
-  function soundWin() {
-    [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => playTone(f, 'sine', 0.22, 0.09), i * 110));
+    initAudio();
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + duration);
   }
 
-  // --- UTILITAIRES CRYPTO (HACHAGE MOT DE PASSE) ---
-  async function hashPassword(str) {
-    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('cn_salt_' + str));
-    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    document.getElementById('soundBtn').textContent = soundEnabled ? '🔊 Sons' : '🔇 Muet';
   }
 
-  // --- INITIALISATION & LOGIQUE MÉTIER ---
-  function getInitialBoard() {
-    return [
+  function toggleTheme() {
+    document.body.classList.toggle('light-theme');
+    const isLight = document.body.classList.contains('light-theme');
+    document.getElementById('themeBtn').textContent = isLight ? '🌙 Sombre' : '☀️ Thème';
+  }
+
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    } else {
+      document.exitFullscreen().catch(() => {});
+    }
+  }
+
+  function openModal(id) {
+    if (id === 'cloudModal') {
+      document.getElementById('cloudProvider').value = cloudConfig.provider || 'firebase';
+      document.getElementById('fbUrlInput').value = cloudConfig.fbUrl || '';
+      document.getElementById('sbUrlInput').value = cloudConfig.sbUrl || '';
+      document.getElementById('sbKeyInput').value = cloudConfig.sbKey || '';
+      toggleCloudFields();
+    }
+    document.getElementById(id).classList.add('open');
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
+  }
+
+  function toggleCloudFields() {
+    const p = document.getElementById('cloudProvider').value;
+    document.getElementById('firebaseFields').style.display = p === 'firebase' ? 'block' : 'none';
+    document.getElementById('supabaseFields').style.display = p === 'supabase' ? 'block' : 'none';
+  }
+
+  function saveCloudConfig() {
+    cloudConfig = {
+      provider: document.getElementById('cloudProvider').value,
+      fbUrl: document.getElementById('fbUrlInput').value.trim().replace(/\/$/, ''),
+      sbUrl: document.getElementById('sbUrlInput').value.trim().replace(/\/$/, ''),
+      sbKey: document.getElementById('sbKeyInput').value.trim()
+    };
+    localStorage.setItem('coneutron_cloud', JSON.stringify(cloudConfig));
+    closeModal('cloudModal');
+    updateStatus("Configuration Cloud enregistrée.");
+  }
+
+  function onModeChange() {
+    mode = document.getElementById('modeSelect').value;
+    document.getElementById('diffSelect').style.display = mode === 'ai' ? 'inline-block' : 'none';
+    document.getElementById('sideSelect').style.display = mode === 'ai' ? 'inline-block' : 'none';
+    document.getElementById('onlinePanel').classList.toggle('active', mode === 'online');
+    if (mode !== 'online') {
+      disconnectRoom();
+      initGame();
+    } else {
+      renderRecentRooms();
+      updateStatus("Mode En Ligne : créez ou rejoignez un salon ci-dessus.");
+    }
+  }
+
+  function initGame(skipSync = false) {
+    mode = document.getElementById('modeSelect').value;
+    humanSide = parseInt(document.getElementById('sideSelect').value, 10);
+    board = [
       [P2, P2, P2, P2, P2],
       [0,  0,  0,  0,  0],
       [0,  0,  NEUTRON, 0, 0],
       [0,  0,  0,  0,  0],
       [P1, P1, P1, P1, P1]
     ];
-  }
-
-  function newGame(skipCloudPush = false) {
-    if (isAnimating) return;
-    board = getInitialBoard();
     turn = P1;
     phase = 'PIECE';
     isFirstTurn = true;
     selected = null;
     validMoves = [];
     gameOver = false;
-    winner = 0;
-    lastMove = null;
-    history = [];
+    moveHistory = [];
     undoStack = [];
+    lastMove = null;
+    updateUndoBtn();
+    renderHistory();
+    updateStatus();
+    render();
 
-    const mode = document.getElementById('modeSelect').value;
-    const humanSide = parseInt(document.getElementById('sideSelect').value, 10);
-
-    updateUI();
-    if (mode === 'online' && onlineSession && !skipCloudPush) {
-      pushRoomState();
+    if (mode === 'online' && currentRoom && !skipSync) {
+      pushOnlineState();
     } else if (mode === 'ai' && humanSide === P2) {
-      setTimeout(playAITurn, 400);
+      setTimeout(playAITurn, 450);
     }
   }
 
-  function onModeChange() {
-    const mode = document.getElementById('modeSelect').value;
-    document.getElementById('onlineCard').style.display = (mode === 'online') ? 'block' : 'none';
-    document.getElementById('diffSelect').style.display = (mode === 'ai') ? 'inline-block' : 'none';
-    document.getElementById('sideSelect').style.display = (mode === 'ai') ? 'inline-block' : 'none';
-
-    if (mode !== 'online') {
-      stopSyncLoop();
-      document.getElementById('syncBadge').textContent = mode === 'ai' ? 'Vs IA' : 'Local 2J';
-      document.getElementById('syncBadge').classList.add('offline');
-      newGame();
-    } else {
-      updateSyncBadge();
-    }
+  function coordToNotation(r, c) {
+    return `${COLS[c]}${5 - r}`;
   }
 
   function getSlideDestinations(b, r, c) {
     const moves = [];
     for (const [dr, dc] of DIRS) {
-      let nr = r + dr, nc = c + dc, steps = 0;
+      let nr = r + dr, nc = c + dc;
+      let steps = 0;
       while (nr >= 0 && nr < 5 && nc >= 0 && nc < 5 && b[nr][nc] === EMPTY) {
-        nr += dr; nc += dc; steps++;
+        nr += dr;
+        nc += dc;
+        steps++;
       }
       if (steps > 0) moves.push([nr - dr, nc - dc]);
     }
@@ -508,9 +544,11 @@ CREATE POLICY "public_rw" ON coneutron_rooms FOR ALL USING (true) WITH CHECK (tr
   }
 
   function findNeutron(b) {
-    for (let r = 0; r < 5; r++)
-      for (let c = 0; c < 5; c++)
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
         if (b[r][c] === NEUTRON) return [r, c];
+      }
+    }
     return [2, 2];
   }
 
@@ -522,117 +560,165 @@ CREATE POLICY "public_rw" ON coneutron_rooms FOR ALL USING (true) WITH CHECK (tr
   }
 
   function hasAnyPieceMove(b, player) {
-    for (let r = 0; r < 5; r++)
-      for (let c = 0; c < 5; c++)
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
         if (b[r][c] === player && getSlideDestinations(b, r, c).length > 0) return true;
+      }
+    }
     return false;
   }
 
-  function coordName(r, c) {
-    return `${COLS[c]}${5 - r}`;
-  }
-
-  function canLocalUserAct() {
+  function canLocalPlayerAct() {
     if (gameOver || isAnimating) return false;
-    const mode = document.getElementById('modeSelect').value;
-    if (mode === 'pvp') return true;
-    if (mode === 'ai') {
-      const humanSide = parseInt(document.getElementById('sideSelect').value, 10);
-      return turn === humanSide;
-    }
-    if (mode === 'online') {
-      return onlineSession && turn === onlineSession.myPlayer;
-    }
-    return false;
+    if (mode === 'ai') return turn === humanSide;
+    if (mode === 'online') return currentRoom && turn === currentRoom.side;
+    return true;
   }
 
   function handleCellClick(r, c) {
-    cursor = { r, c };
-    if (!canLocalUserAct()) { renderBoard(); return; }
-
-    const isDest = validMoves.some(([vr, vc]) => vr === r && vc === c);
-    if (selected && isDest) {
-      performAnimatedMove(selected[0], selected[1], r, c, true);
+    cursor = [r, c];
+    if (!canLocalPlayerAct()) {
+      render();
       return;
     }
 
-    const val = board[r][c];
-    if (phase === 'NEUTRON' && val === NEUTRON) {
-      selected = [r, c];
-      validMoves = getSlideDestinations(board, r, c);
-      soundSelect();
-    } else if (phase === 'PIECE' && val === turn) {
-      selected = [r, c];
-      validMoves = getSlideDestinations(board, r, c);
-      soundSelect();
+    const isMove = validMoves.some(([vr, vc]) => vr === r && vc === c);
+    if (selected && isMove) {
+      if (phase === 'NEUTRON' || isFirstTurn) {
+        saveUndoSnapshot();
+      }
+      animateAndExecute(selected[0], selected[1], r, c);
+      return;
     }
-    renderBoard();
+
+    const cellVal = board[r][c];
+    if (phase === 'NEUTRON' && cellVal === NEUTRON) {
+      selected = [r, c];
+      validMoves = getSlideDestinations(board, r, c);
+      playTone(520, 0.06);
+    } else if (phase === 'PIECE' && cellVal === turn) {
+      selected = [r, c];
+      validMoves = getSlideDestinations(board, r, c);
+      playTone(520, 0.06);
+    }
+    render();
   }
 
-  function performAnimatedMove(fr, fc, tr, tc, isHumanAction, onComplete) {
-    isAnimating = true;
-    const pieceType = board[fr][fc];
-    const dist = Math.max(Math.abs(tr - fr), Math.abs(tc - fc));
-    soundSlide(dist);
+  function saveUndoSnapshot() {
+    undoStack.push({
+      board: board.map(r => [...r]),
+      turn,
+      phase,
+      isFirstTurn,
+      moveHistory: [...moveHistory],
+      lastMove: lastMove ? [...lastMove] : null,
+      scores: { ...scores }
+    });
+    updateUndoBtn();
+  }
 
-    if (isHumanAction && document.getElementById('modeSelect').value !== 'online') {
-      undoStack.push({
-        board: board.map(row => [...row]),
-        turn, phase, isFirstTurn, gameOver, winner,
-        lastMove: lastMove ? { ...lastMove } : null,
-        historyLen: history.length
-      });
+  function undoMove() {
+    if (undoStack.length === 0 || isAnimating) return;
+    if (mode === 'online') {
+      updateStatus("L'annulation est désactivée en mode en ligne.");
+      return;
     }
-
-    const animLayer = document.getElementById('animLayer');
-    const ghost = document.createElement('div');
-    ghost.className = 'anim-piece piece ' + (pieceType === P1 ? 'p1' : pieceType === P2 ? 'p2' : 'neutron');
-    const stepPx = 66;
-    const offset = 9;
-    ghost.style.left = (fc * stepPx + offset) + 'px';
-    ghost.style.top = (fr * stepPx + offset) + 'px';
-    const dur = 140 + dist * 45;
-    ghost.style.transition = `left ${dur}ms ease-out, top ${dur}ms ease-out`;
-    animLayer.appendChild(ghost);
-
-    // Masquer temporairement la pièce d'origine
-    board[fr][fc] = EMPTY;
+    const snap = undoStack.pop();
+    board = snap.board;
+    turn = snap.turn;
+    phase = snap.phase;
+    isFirstTurn = snap.isFirstTurn;
+    moveHistory = snap.moveHistory;
+    lastMove = snap.lastMove;
+    scores = snap.scores;
+    gameOver = false;
     selected = null;
     validMoves = [];
-    renderBoard();
 
-    requestAnimationFrame(() => {
-      ghost.style.left = (tc * stepPx + offset) + 'px';
-      ghost.style.top = (tr * stepPx + offset) + 'px';
-    });
-
-    setTimeout(() => {
-      animLayer.innerHTML = '';
-      board[tr][tc] = pieceType;
-      lastMove = { fr, fc, tr, tc };
-      const label = pieceType === NEUTRON ? 'Neutron' : (pieceType === P1 ? 'Bleu' : 'Rouge');
-      history.push({ player: turn, text: `${label} : ${coordName(fr, fc)} → ${coordName(tr, tc)}` });
-
-      isAnimating = false;
-      finalizeStep(onComplete);
-    }, dur + 15);
+    if (phase === 'NEUTRON') {
+      const [nr, nc] = findNeutron(board);
+      selected = [nr, nc];
+      validMoves = getSlideDestinations(board, nr, nc);
+    }
+    updateScoreDisplay();
+    updateUndoBtn();
+    renderHistory();
+    updateStatus();
+    render();
   }
 
-  function finalizeStep(onComplete) {
-    const win = checkWin(board);
-    if (win) {
-      declareWinner(win);
-      if (document.getElementById('modeSelect').value === 'online' && onlineSession) pushRoomState();
-      if (onComplete) onComplete();
+  function updateUndoBtn() {
+    document.getElementById('undoBtn').disabled = (undoStack.length === 0 || mode === 'online');
+  }
+
+  function animateAndExecute(fr, fc, tr, tc, callback) {
+    isAnimating = true;
+    const boardEl = document.getElementById('board');
+    const cells = boardEl.querySelectorAll('.cell');
+    const fromCell = cells[fr * 5 + fc];
+    const toCell = cells[tr * 5 + tc];
+    const pieceVal = board[fr][fc];
+
+    const dist = Math.max(Math.abs(tr - fr), Math.abs(tc - fc));
+    const duration = 120 + dist * 45;
+    playTone(260 + dist * 40, duration / 1000, 'triangle', 0.06);
+
+    if (fromCell && toCell) {
+      const animEl = document.createElement('div');
+      animEl.className = 'anim-piece piece ' + (pieceVal === P1 ? 'p1' : pieceVal === P2 ? 'p2' : 'neutron');
+      animEl.style.left = (fromCell.offsetLeft + 9) + 'px';
+      animEl.style.top = (fromCell.offsetTop + 9) + 'px';
+      animEl.style.transition = `left ${duration}ms ease-out, top ${duration}ms ease-out`;
+      boardEl.appendChild(animEl);
+
+      const origPiece = fromCell.querySelector('.piece');
+      if (origPiece) origPiece.style.visibility = 'hidden';
+
+      requestAnimationFrame(() => {
+        animEl.style.left = (toCell.offsetLeft + 9) + 'px';
+        animEl.style.top = (toCell.offsetTop + 9) + 'px';
+      });
+
+      setTimeout(() => {
+        animEl.remove();
+        isAnimating = false;
+        finalizeMove(fr, fc, tr, tc);
+        if (callback) callback();
+      }, duration + 15);
+    } else {
+      isAnimating = false;
+      finalizeMove(fr, fc, tr, tc);
+      if (callback) callback();
+    }
+  }
+
+  function finalizeMove(fr, fc, tr, tc) {
+    const piece = board[fr][fc];
+    board[fr][fc] = EMPTY;
+    board[tr][tc] = piece;
+    selected = null;
+    validMoves = [];
+    lastMove = [fr, fc, tr, tc];
+
+    const label = piece === NEUTRON ? 'Neutron' : (turn === P1 ? 'Bleu' : 'Rouge');
+    moveHistory.push({
+      player: turn,
+      text: `${label} : ${coordToNotation(fr, fc)} → ${coordToNotation(tr, tc)}`
+    });
+    renderHistory();
+
+    const winner = checkWin(board);
+    if (winner) {
+      endGame(winner);
+      if (mode === 'online' && currentRoom) pushOnlineState();
       return;
     }
 
     if (phase === 'NEUTRON') {
       phase = 'PIECE';
       if (!hasAnyPieceMove(board, turn)) {
-        declareWinner(turn === P1 ? P2 : P1, 'blocage');
-        if (document.getElementById('modeSelect').value === 'online' && onlineSession) pushRoomState();
-        if (onComplete) onComplete();
+        endGame(turn === P1 ? P2 : P1, "adversaire bloqué");
+        if (mode === 'online' && currentRoom) pushOnlineState();
         return;
       }
     } else {
@@ -642,110 +728,145 @@ CREATE POLICY "public_rw" ON coneutron_rooms FOR ALL USING (true) WITH CHECK (tr
       const [nr, nc] = findNeutron(board);
       const nMoves = getSlideDestinations(board, nr, nc);
       if (nMoves.length === 0) {
-        declareWinner(turn === P1 ? P2 : P1, 'Neutron bloqué');
-        if (document.getElementById('modeSelect').value === 'online' && onlineSession) pushRoomState();
-        if (onComplete) onComplete();
+        endGame(turn === P1 ? P2 : P1, "Neutron bloqué");
+        if (mode === 'online' && currentRoom) pushOnlineState();
         return;
       }
-      if (canLocalUserAct()) {
+      if (canLocalPlayerAct()) {
         selected = [nr, nc];
         validMoves = nMoves;
       }
     }
 
-    updateUI();
+    updateStatus();
+    render();
 
-    const mode = document.getElementById('modeSelect').value;
-    if (mode === 'online' && onlineSession) {
-      pushRoomState();
-    } else if (mode === 'ai' && !gameOver) {
-      const humanSide = parseInt(document.getElementById('sideSelect').value, 10);
-      if (turn !== humanSide && !onComplete) {
-        setTimeout(playAITurn, 320);
-      }
+    if (mode === 'online' && currentRoom) {
+      pushOnlineState();
+    } else if (!gameOver && mode === 'ai' && turn !== humanSide) {
+      setTimeout(playAITurn, 350);
     }
-    if (onComplete) onComplete();
   }
 
-  function declareWinner(w, reason = '') {
+  function endGame(winner, reason = "") {
     gameOver = true;
-    winner = w;
     selected = null;
     validMoves = [];
-    scores[w]++;
-    soundWin();
-    updateUI(reason);
+    scores[winner]++;
+    updateScoreDisplay();
+    playTone(winner === P1 ? 587 : 440, 0.15);
+    setTimeout(() => playTone(winner === P1 ? 784 : 554, 0.3), 160);
+
+    const name = winner === P1 ? "Bleu (J1)" : "Rouge (J2)";
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = `🏆 Victoire : ${name} ${reason ? `(${reason})` : ''}!`;
+    statusEl.style.borderLeftColor = winner === P1 ? 'var(--p1)' : 'var(--p2)';
+    render();
   }
 
-  function undoMove() {
-    const mode = document.getElementById('modeSelect').value;
-    if (mode === 'online' || isAnimating || undoStack.length === 0) return;
-
-    // En mode IA, revenir jusqu'au tour humain
-    let snap = undoStack.pop();
-    if (mode === 'ai') {
-      const humanSide = parseInt(document.getElementById('sideSelect').value, 10);
-      while (snap.turn !== humanSide && undoStack.length > 0) {
-        snap = undoStack.pop();
-      }
-    }
-    if (gameOver && winner) scores[winner] = Math.max(0, scores[winner] - 1);
-
-    board = snap.board;
-    turn = snap.turn;
-    phase = snap.phase;
-    isFirstTurn = snap.isFirstTurn;
-    gameOver = snap.gameOver;
-    winner = snap.winner;
-    lastMove = snap.lastMove;
-    history = history.slice(0, snap.historyLen);
-    selected = null;
-    validMoves = [];
-    updateUI();
+  function updateScoreDisplay() {
+    document.getElementById('scoreP1').textContent = scores[1];
+    document.getElementById('scoreP2').textContent = scores[2];
   }
 
   function resetScores() {
     scores = { 1: 0, 2: 0 };
-    updateUI();
+    updateScoreDisplay();
+    if (mode === 'online' && currentRoom) pushOnlineState();
   }
 
-  // --- INTELLIGENCE ARTIFICIELLE (MINIMAX ALPHA-BETA) ---
+  function updateStatus(customText = null) {
+    const statusEl = document.getElementById('status');
+    if (customText) {
+      statusEl.textContent = customText;
+      return;
+    }
+    const name = turn === P1 ? "Bleu (J1)" : "Rouge (J2)";
+    let suffix = "";
+    if (mode === 'online' && currentRoom) {
+      suffix = (turn === currentRoom.side) ? " (À vous)" : " (En attente de l'adversaire)";
+    } else if (mode === 'ai') {
+      suffix = (turn === humanSide) ? " (Vous)" : " (IA)";
+    }
+    const action = phase === 'NEUTRON'
+      ? "déplacez le Neutron (jaune)"
+      : (isFirstTurn ? "1er tour : déplacez un pion" : "déplacez l'un de vos pions");
+    statusEl.textContent = `${name}${suffix} : ${action}`;
+    statusEl.style.borderLeftColor = turn === P1 ? 'var(--p1)' : 'var(--p2)';
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    list.innerHTML = '';
+    moveHistory.forEach((m, idx) => {
+      const div = document.createElement('div');
+      div.className = 'move-item';
+      div.style.borderLeft = `3px solid ${m.player === P1 ? 'var(--p1)' : 'var(--p2)'}`;
+      div.innerHTML = `<span>#${idx + 1}</span><span>${m.text}</span>`;
+      list.appendChild(div);
+    });
+    list.scrollTop = list.scrollHeight;
+    document.getElementById('turnCounter').textContent = `Coup ${moveHistory.length + 1}`;
+  }
+
+  function render() {
+    const boardEl = document.getElementById('board');
+    boardEl.innerHTML = '';
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const cell = document.createElement('div');
+        cell.className = 'cell' + ((r + c) % 2 === 1 ? ' dark' : '');
+        if (lastMove && ((lastMove[0] === r && lastMove[1] === c) || (lastMove[2] === r && lastMove[3] === c))) {
+          cell.classList.add('last-move');
+        }
+        if (cursor[0] === r && cursor[1] === c) {
+          cell.classList.add('cursor');
+        }
+        if (validMoves.some(([vr, vc]) => vr === r && vc === c)) {
+          cell.classList.add('valid');
+        }
+        cell.onclick = () => handleCellClick(r, c);
+
+        const val = board[r][c];
+        if (val !== EMPTY) {
+          const piece = document.createElement('div');
+          piece.className = 'piece ' + (val === P1 ? 'p1' : val === P2 ? 'p2' : 'neutron');
+          if (selected && selected[0] === r && selected[1] === c) {
+            piece.classList.add('selected');
+          }
+          cell.appendChild(piece);
+        }
+        boardEl.appendChild(cell);
+      }
+    }
+  }
+
+  // --- IA MINIMAX ---
   function cloneBoard(b) { return b.map(r => [...r]); }
 
-  function getTurnActions(b, player, firstTurnFlag) {
+  function getAllTurnActions(b, player) {
     const actions = [];
-    if (firstTurnFlag) {
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-          if (b[r][c] === player) {
-            for (const [ptr, ptc] of getSlideDestinations(b, r, c)) {
-              const b2 = cloneBoard(b);
-              b2[r][c] = EMPTY; b2[ptr][ptc] = player;
-              actions.push({ nFrom: null, nTo: null, pFrom: [r, c], pTo: [ptr, ptc], board: b2 });
-            }
-          }
-        }
-      }
-      return actions;
-    }
-
     const [nr, nc] = findNeutron(b);
-    for (const [ntr, ntc] of getSlideDestinations(b, nr, nc)) {
+    const nMoves = getSlideDestinations(b, nr, nc);
+
+    for (const [ntr, ntc] of nMoves) {
       const b1 = cloneBoard(b);
-      b1[nr][nc] = EMPTY; b1[ntr][ntc] = NEUTRON;
-      const w = checkWin(b1);
-      if (w === player) {
+      b1[nr][nc] = EMPTY;
+      b1[ntr][ntc] = NEUTRON;
+
+      if (checkWin(b1) === player) {
         actions.push({ nFrom: [nr, nc], nTo: [ntr, ntc], pFrom: null, pTo: null, board: b1 });
         continue;
       }
-      if (w !== 0) continue;
+      if (checkWin(b1) !== 0) continue;
 
       for (let r = 0; r < 5; r++) {
         for (let c = 0; c < 5; c++) {
           if (b1[r][c] === player) {
             for (const [ptr, ptc] of getSlideDestinations(b1, r, c)) {
               const b2 = cloneBoard(b1);
-              b2[r][c] = EMPTY; b2[ptr][ptc] = player;
+              b2[r][c] = EMPTY;
+              b2[ptr][ptc] = player;
               actions.push({ nFrom: [nr, nc], nTo: [ntr, ntc], pFrom: [r, c], pTo: [ptr, ptc], board: b2 });
             }
           }
@@ -755,166 +876,234 @@ CREATE POLICY "public_rw" ON coneutron_rooms FOR ALL USING (true) WITH CHECK (tr
     return actions;
   }
 
-  function evaluate(b, aiSide) {
-    const w = checkWin(b);
-    if (w === aiSide) return 10000;
-    if (w !== 0) return -10000;
+  function evaluateBoard(b, aiSide) {
+    const win = checkWin(b);
+    if (win === aiSide) return 10000;
+    if (win !== 0) return -10000;
+
     const [nr, nc] = findNeutron(b);
-    const targetRow = (aiSide === P1) ? 0 : 4;
-    const distScore = (4 - Math.abs(targetRow - nr)) * 40;
-    let threat = 0;
+    const targetRow = aiSide === P1 ? 0 : 4;
+    const distScore = (4 - Math.abs(targetRow - nr)) * 35;
+
+    let mobilityScore = 0;
     for (const [mr] of getSlideDestinations(b, nr, nc)) {
-      if (mr === targetRow) threat += 140;
-      else if (mr === (4 - targetRow)) threat -= 140;
+      if (mr === targetRow) mobilityScore += 140;
+      if (mr === (4 - targetRow)) mobilityScore -= 140;
     }
-    return distScore + threat + (Math.random() * 8 - 4);
+    return distScore + mobilityScore + (Math.random() * 8 - 4);
   }
 
-  function minimax(b, depth, alpha, beta, maxing, aiSide) {
-    const w = checkWin(b);
-    if (w === aiSide) return 10000 + depth;
-    if (w !== 0) return -10000 - depth;
-    if (depth === 0) return evaluate(b, aiSide);
+  function minimax(b, depth, alpha, beta, maximizing, aiSide) {
+    const oppSide = aiSide === P1 ? P2 : P1;
+    const win = checkWin(b);
+    if (win === aiSide) return 10000 + depth;
+    if (win === oppSide) return -10000 - depth;
+    if (depth === 0) return evaluateBoard(b, aiSide);
 
-    const curPlayer = maxing ? aiSide : (aiSide === P1 ? P2 : P1);
-    const acts = getTurnActions(b, curPlayer, false);
-    if (acts.length === 0) return maxing ? -9000 : 9000;
+    const player = maximizing ? aiSide : oppSide;
+    const actions = getAllTurnActions(b, player);
+    if (actions.length === 0) return maximizing ? -9000 : 9000;
 
-    if (maxing) {
-      let best = -Infinity;
-      for (const a of acts) {
-        best = Math.max(best, minimax(a.board, depth - 1, alpha, beta, false, aiSide));
-        alpha = Math.max(alpha, best);
+    if (maximizing) {
+      let maxEval = -Infinity;
+      for (const act of actions) {
+        const ev = minimax(act.board, depth - 1, alpha, beta, false, aiSide);
+        maxEval = Math.max(maxEval, ev);
+        alpha = Math.max(alpha, ev);
         if (beta <= alpha) break;
       }
-      return best;
+      return maxEval;
     } else {
-      let best = Infinity;
-      for (const a of acts) {
-        best = Math.min(best, minimax(a.board, depth - 1, alpha, beta, true, aiSide));
-        beta = Math.min(beta, best);
+      let minEval = Infinity;
+      for (const act of actions) {
+        const ev = minimax(act.board, depth - 1, alpha, beta, true, aiSide);
+        minEval = Math.min(minEval, ev);
+        beta = Math.min(beta, ev);
         if (beta <= alpha) break;
       }
-      return best;
+      return minEval;
     }
   }
 
   function playAITurn() {
-    if (gameOver) return;
-    const aiSide = turn;
+    if (gameOver || mode !== 'ai' || turn === humanSide) return;
+    const aiSide = humanSide === P1 ? P2 : P1;
     const depth = parseInt(document.getElementById('diffSelect').value, 10);
-    const acts = getTurnActions(board, aiSide, isFirstTurn);
-    if (acts.length === 0) {
-      declareWinner(aiSide === P1 ? P2 : P1, 'IA bloquée');
+
+    if (isFirstTurn && aiSide === P1) {
+      const openingMoves = [];
+      for (let c = 0; c < 5; c++) {
+        for (const [tr, tc] of getSlideDestinations(board, 4, c)) {
+          openingMoves.push({ pFrom: [4, c], pTo: [tr, tc] });
+        }
+      }
+      const pick = openingMoves[Math.floor(Math.random() * openingMoves.length)];
+      animateAndExecute(pick.pFrom[0], pick.pFrom[1], pick.pTo[0], pick.pTo[1]);
       return;
     }
 
-    let bestAct = acts[0], bestVal = -Infinity;
-    for (const a of acts) {
-      const val = minimax(a.board, depth - 1, -Infinity, Infinity, false, aiSide);
-      if (val > bestVal) { bestVal = val; bestAct = a; }
+    const actions = getAllTurnActions(board, aiSide);
+    if (actions.length === 0) {
+      endGame(humanSide, "IA bloquée");
+      return;
     }
 
-    if (bestAct.nFrom) {
-      performAnimatedMove(bestAct.nFrom[0], bestAct.nFrom[1], bestAct.nTo[0], bestAct.nTo[1], false, () => {
-        if (!gameOver && bestAct.pFrom) {
-          setTimeout(() => {
-            performAnimatedMove(bestAct.pFrom[0], bestAct.pFrom[1], bestAct.pTo[0], bestAct.pTo[1], false);
-          }, 220);
-        }
-      });
-    } else if (bestAct.pFrom) {
-      performAnimatedMove(bestAct.pFrom[0], bestAct.pFrom[1], bestAct.pTo[0], bestAct.pTo[1], false);
+    let bestAct = actions[0];
+    let bestScore = -Infinity;
+    for (const act of actions) {
+      const score = minimax(act.board, depth, -Infinity, Infinity, false, aiSide);
+      if (score > bestScore) {
+        bestScore = score;
+        bestAct = act;
+      }
     }
+
+    animateAndExecute(bestAct.nFrom[0], bestAct.nFrom[1], bestAct.nTo[0], bestAct.nTo[1], () => {
+      if (!gameOver && bestAct.pFrom) {
+        setTimeout(() => {
+          animateAndExecute(bestAct.pFrom[0], bestAct.pFrom[1], bestAct.pTo[0], bestAct.pTo[1]);
+        }, 250);
+      }
+    });
   }
 
-  // --- SYNCHRONISATION EN LIGNE (SUPABASE & FIREBASE) ---
-  function saveCloudConfig() {
-    const provider = document.getElementById('providerSelect').value;
-    const cfg = {
-      provider,
-      sbUrl: document.getElementById('sbUrlInput').value.trim().replace(/\/$/, ''),
-      sbKey: document.getElementById('sbKeyInput').value.trim(),
-      fbUrl: document.getElementById('fbUrlInput').value.trim().replace(/\/$/, '')
-    };
-    localStorage.setItem('coneutron_cloud_cfg', JSON.stringify(cfg));
-    cloudConfig = cfg;
-    closeModal('configModal');
-    alert('Configuration Cloud enregistrée ! Vous pouvez maintenant créer ou rejoindre un salon.');
+  // --- ONLINE SYNC (FIREBASE / SUPABASE) ---
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
   }
 
-  function toggleProviderFields() {
-    const p = document.getElementById('providerSelect').value;
-    document.getElementById('supabaseFields').style.display = (p === 'supabase') ? 'block' : 'none';
-    document.getElementById('firebaseFields').style.display = (p === 'firebase') ? 'block' : 'none';
-  }
-
-  function ensureCloudReady() {
-    if (!cloudConfig) {
-      openModal('configModal');
-      return false;
-    }
-    if (cloudConfig.provider === 'supabase' && (!cloudConfig.sbUrl || !cloudConfig.sbKey)) {
-      openModal('configModal');
-      return false;
-    }
-    if (cloudConfig.provider === 'firebase' && !cloudConfig.fbUrl) {
-      openModal('configModal');
-      return false;
-    }
-    return true;
-  }
-
-  function serializeGameState() {
+  function serializeState() {
     return {
-      board, turn, phase, isFirstTurn, gameOver, winner, lastMove, history, scores,
-      ts: Date.now()
+      board, turn, phase, isFirstTurn, gameOver, scores, moveHistory, lastMove,
+      updatedAt: Date.now()
     };
   }
 
-  function applyRemoteState(st) {
-    if (!st || !st.board) return;
-    board = st.board;
-    turn = st.turn;
-    phase = st.phase;
-    isFirstTurn = st.isFirstTurn;
-    gameOver = st.gameOver;
-    winner = st.winner || 0;
-    lastMove = st.lastMove || null;
-    history = st.history || [];
-    if (st.scores) scores = st.scores;
+  function applyRemoteState(state) {
+    if (!state || !state.board) return;
+    const hash = JSON.stringify(state);
+    if (hash === lastSyncedHash) return;
+    lastSyncedHash = hash;
+
+    board = state.board;
+    turn = state.turn;
+    phase = state.phase;
+    isFirstTurn = state.isFirstTurn;
+    gameOver = state.gameOver;
+    scores = state.scores || { 1: 0, 2: 0 };
+    moveHistory = state.moveHistory || [];
+    lastMove = state.lastMove || null;
     selected = null;
     validMoves = [];
 
-    if (!gameOver && onlineSession && turn === onlineSession.myPlayer && phase === 'NEUTRON') {
+    if (!gameOver && currentRoom && turn === currentRoom.side && phase === 'NEUTRON') {
       const [nr, nc] = findNeutron(board);
       selected = [nr, nc];
       validMoves = getSlideDestinations(board, nr, nc);
     }
-    updateUI();
+
+    updateScoreDisplay();
+    renderHistory();
+    updateStatus();
+    render();
+    playTone(660, 0.08);
   }
 
-  async function apiFetchRoom(roomCode) {
-    if (cloudConfig.provider === 'supabase') {
-      const res = await fetch(`${cloudConfig.sbUrl}/rest/v1/coneutron_rooms?room_code=eq.${encodeURIComponent(roomCode)}&select=*`, {
+  async function connectRoom() {
+    const roomId = document.getElementById('roomInput').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const pass = document.getElementById('passInput').value;
+    const side = parseInt(document.getElementById('onlineSideSelect').value, 10);
+
+    if (!roomId || !pass) {
+      updateStatus("⚠️ Veuillez saisir un nom de salon et un mot de passe.");
+      return;
+    }
+    if (cloudConfig.provider === 'firebase' && !cloudConfig.fbUrl) {
+      openModal('cloudModal');
+      return;
+    }
+    if (cloudConfig.provider === 'supabase' && (!cloudConfig.sbUrl || !cloudConfig.sbKey)) {
+      openModal('cloudModal');
+      return;
+    }
+
+    disconnectRoom();
+    const passHash = await sha256(roomId + ":" + pass);
+    currentRoom = { id: roomId, pass, passHash, side };
+
+    const badge = document.getElementById('onlineStatusBadge');
+    badge.textContent = "Connexion...";
+    badge.classList.remove('connected');
+
+    try {
+      const existing = await fetchRemoteRoom(roomId);
+      if (!existing) {
+        initGame(true);
+        await saveRemoteRoom(roomId, passHash, serializeState());
+        lastSyncedHash = JSON.stringify(serializeState());
+      } else {
+        if (existing.pass_hash !== passHash) {
+          currentRoom = null;
+          badge.textContent = "Mot de passe incorrect";
+          updateStatus("❌ Mot de passe incorrect pour ce salon.");
+          return;
+        }
+        applyRemoteState(existing.state);
+      }
+
+      badge.textContent = `Connecté : ${roomId} (${side === 1 ? 'Bleu' : 'Rouge'})`;
+      badge.classList.add('connected');
+      document.getElementById('shareBtn').style.display = 'inline-block';
+      saveRecentRoom(roomId, pass, side);
+      startListeningRoom();
+      updateStatus();
+      render();
+    } catch (err) {
+      badge.textContent = "Erreur réseau";
+      updateStatus("❌ Erreur de connexion Cloud : vérifiez votre URL/clé dans Config Cloud.");
+    }
+  }
+
+  function disconnectRoom() {
+    if (pollTimer) clearInterval(pollTimer);
+    if (sseSource) sseSource.close();
+    pollTimer = null;
+    sseSource = null;
+    currentRoom = null;
+    document.getElementById('shareBtn').style.display = 'none';
+    const badge = document.getElementById('onlineStatusBadge');
+    badge.textContent = "Hors ligne";
+    badge.classList.remove('connected');
+  }
+
+  async function fetchRemoteRoom(roomId) {
+    if (cloudConfig.provider === 'firebase') {
+      const res = await fetch(`${cloudConfig.fbUrl}/rooms/${roomId}.json`);
+      if (!res.ok) throw new Error("Firebase error");
+      return await res.json();
+    } else {
+      const res = await fetch(`${cloudConfig.sbUrl}/rest/v1/coneutron_rooms?id=eq.${roomId}&select=*`, {
         headers: {
           'apikey': cloudConfig.sbKey,
           'Authorization': `Bearer ${cloudConfig.sbKey}`
         }
       });
-      if (!res.ok) throw new Error('Erreur réseau Supabase');
+      if (!res.ok) throw new Error("Supabase error");
       const rows = await res.json();
       return rows.length ? rows[0] : null;
-    } else {
-      const res = await fetch(`${cloudConfig.fbUrl}/rooms/${encodeURIComponent(roomCode)}.json`);
-      if (!res.ok) throw new Error('Erreur réseau Firebase');
-      return await res.json();
     }
   }
 
-  async function apiUpsertRoom(roomCode, passwordHash, state) {
-    if (cloudConfig.provider === 'supabase') {
-      const res = await fetch(`${cloudConfig.sbUrl}/rest/v1/coneutron_rooms`, {
+  async function saveRemoteRoom(roomId, passHash, state) {
+    if (cloudConfig.provider === 'firebase') {
+      await fetch(`${cloudConfig.fbUrl}/rooms/${roomId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pass_hash: passHash, state })
+      });
+    } else {
+      await fetch(`${cloudConfig.sbUrl}/rest/v1/coneutron_rooms`, {
         method: 'POST',
         headers: {
           'apikey': cloudConfig.sbKey,
@@ -922,272 +1111,147 @@ CREATE POLICY "public_rw" ON coneutron_rooms FOR ALL USING (true) WITH CHECK (tr
           'Content-Type': 'application/json',
           'Prefer': 'resolution=merge-duplicates'
         },
-        body: JSON.stringify({
-          room_code: roomCode,
-          password_hash: passwordHash,
-          state,
-          updated_at: new Date().toISOString()
-        })
+        body: JSON.stringify({ id: roomId, pass_hash: passHash, state, updated_at: new Date().toISOString() })
       });
-      if (!res.ok) throw new Error('Échec sauvegarde Supabase');
-    } else {
-      const res = await fetch(`${cloudConfig.fbUrl}/rooms/${encodeURIComponent(roomCode)}.json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password_hash: passwordHash, state })
-      });
-      if (!res.ok) throw new Error('Échec sauvegarde Firebase');
     }
   }
 
-  async function createOnlineRoom() {
-    if (!ensureCloudReady()) return;
-    const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-    const pass = document.getElementById('roomPassInput').value;
-    if (!roomCode || !pass) return alert('Veuillez saisir un code de salon et un mot de passe.');
-
-    try {
-      const existing = await apiFetchRoom(roomCode);
-      if (existing) return alert('Ce code de salon existe déjà. Choisissez un autre code ou cliquez sur Rejoindre.');
-
-      const passHash = await hashPassword(pass);
-      newGame(true);
-      const st = serializeGameState();
-      await apiUpsertRoom(roomCode, passHash, st);
-
-      onlineSession = { roomCode, passHash, myPlayer: P1, lastTs: st.ts };
-      enterRoomUI();
-      startSyncLoop();
-    } catch (err) {
-      alert('Impossible de créer le salon : ' + err.message);
-    }
+  async function pushOnlineState() {
+    if (!currentRoom) return;
+    const st = serializeState();
+    lastSyncedHash = JSON.stringify(st);
+    await saveRemoteRoom(currentRoom.id, currentRoom.passHash, st);
   }
 
-  async function joinOnlineRoom() {
-    if (!ensureCloudReady()) return;
-    const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-    const pass = document.getElementById('roomPassInput').value;
-    if (!roomCode || !pass) return alert('Veuillez saisir le code du salon et son mot de passe.');
-
-    try {
-      const record = await apiFetchRoom(roomCode);
-      if (!record) return alert('Salon introuvable.');
-
-      const passHash = await hashPassword(pass);
-      if (record.password_hash !== passHash) return alert('Mot de passe incorrect.');
-
-      // Déterminer le rôle : J2 par défaut si on rejoint, ou choix via sélecteur si reprise
-      const preferredSide = parseInt(document.getElementById('sideSelect').value, 10);
-      const myPlayer = (record.state.history && record.state.history.length === 0) ? P2 : preferredSide;
-
-      onlineSession = { roomCode, passHash, myPlayer, lastTs: record.state.ts || 0 };
-      applyRemoteState(record.state);
-      enterRoomUI();
-      startSyncLoop();
-    } catch (err) {
-      alert('Erreur de connexion au salon : ' + err.message);
-    }
-  }
-
-  async function pushRoomState() {
-    if (!onlineSession) return;
-    try {
-      const st = serializeGameState();
-      onlineSession.lastTs = st.ts;
-      await apiUpsertRoom(onlineSession.roomCode, onlineSession.passHash, st);
-      document.getElementById('displaySyncDetail').textContent = 'Sauvegardé à ' + new Date().toLocaleTimeString();
-    } catch (e) {
-      document.getElementById('displaySyncDetail').textContent = 'Erreur de synchronisation';
-    }
-  }
-
-  async function manualRefreshRoom() {
-    if (!onlineSession) return;
-    try {
-      const record = await apiFetchRoom(onlineSession.roomCode);
-      if (record && record.state && record.state.ts !== onlineSession.lastTs) {
-        onlineSession.lastTs = record.state.ts;
-        applyRemoteState(record.state);
-        soundSelect();
-      }
-      document.getElementById('displaySyncDetail').textContent = 'À jour (' + new Date().toLocaleTimeString() + ')';
-    } catch (e) {}
-  }
-
-  function startSyncLoop() {
-    stopSyncLoop();
-    // Écoute temps réel SSE pour Firebase, ou polling rapide (2.5s) compatible Supabase/Firebase
-    if (cloudConfig.provider === 'firebase') {
-      try {
-        eventSource = new EventSource(`${cloudConfig.fbUrl}/rooms/${encodeURIComponent(onlineSession.roomCode)}/state.json`);
-        eventSource.addEventListener('put', (e) => {
+  function startListeningRoom() {
+    if (!currentRoom) return;
+    if (cloudConfig.provider === 'firebase' && typeof EventSource !== 'undefined') {
+      sseSource = new EventSource(`${cloudConfig.fbUrl}/rooms/${currentRoom.id}/state.json`);
+      sseSource.addEventListener('put', (e) => {
+        try {
           const payload = JSON.parse(e.data);
-          if (payload && payload.data && payload.data.ts && payload.data.ts !== onlineSession.lastTs) {
-            onlineSession.lastTs = payload.data.ts;
-            applyRemoteState(payload.data);
-            soundSelect();
-          }
-        });
-      } catch (e) {}
+          if (payload && payload.data) applyRemoteState(payload.data);
+        } catch (_) {}
+      });
     }
-    syncTimer = setInterval(manualRefreshRoom, 2500);
+    pollTimer = setInterval(async () => {
+      if (!currentRoom) return;
+      try {
+        const data = await fetchRemoteRoom(currentRoom.id);
+        if (data && data.state) applyRemoteState(data.state);
+      } catch (_) {}
+    }, 2500);
   }
 
-  function stopSyncLoop() {
-    if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
-    if (eventSource) { eventSource.close(); eventSource = null; }
+  // --- RECENT ROOMS & SHARE LINK ---
+  function saveRecentRoom(id, pass, side) {
+    let list = JSON.parse(localStorage.getItem('coneutron_recent_rooms') || '[]');
+    list = list.filter(r => r.id !== id);
+    list.unshift({ id, pass, side, date: new Date().toLocaleDateString('fr-FR') });
+    localStorage.setItem('coneutron_recent_rooms', JSON.stringify(list.slice(0, 8)));
+    renderRecentRooms();
   }
 
-  function enterRoomUI() {
-    document.getElementById('lobbyControls').style.display = 'none';
-    document.getElementById('activeRoomBox').style.display = 'block';
-    document.getElementById('displayRoomCode').textContent = onlineSession.roomCode;
-    document.getElementById('displayMyRole').textContent = onlineSession.myPlayer === P1 ? 'Bleu (J1)' : 'Rouge (J2)';
-    document.getElementById('sideSelect').style.display = 'inline-block';
-    document.getElementById('sideSelect').value = String(onlineSession.myPlayer);
-    document.getElementById('sideSelect').onchange = () => {
-      if (onlineSession) {
-        onlineSession.myPlayer = parseInt(document.getElementById('sideSelect').value, 10);
-        enterRoomUI();
-        updateUI();
-      }
-    };
-    updateSyncBadge();
+  function removeRecentRoom(id) {
+    let list = JSON.parse(localStorage.getItem('coneutron_recent_rooms') || '[]');
+    list = list.filter(r => r.id !== id);
+    localStorage.setItem('coneutron_recent_rooms', JSON.stringify(list));
+    renderRecentRooms();
   }
 
-  function leaveOnlineRoom() {
-    stopSyncLoop();
-    onlineSession = null;
-    document.getElementById('lobbyControls').style.display = 'flex';
-    document.getElementById('activeRoomBox').style.display = 'none';
-    document.getElementById('sideSelect').onchange = null;
-    updateSyncBadge();
-    newGame();
+  function loadRecentRoom(id, pass, side) {
+    document.getElementById('roomInput').value = id;
+    document.getElementById('passInput').value = pass;
+    document.getElementById('onlineSideSelect').value = String(side);
+    connectRoom();
   }
 
-  function copyShareInfo() {
-    if (!onlineSession) return;
-    const txt = `Rejoins ma partie de CoNeutron !
-Salon : ${onlineSession.roomCode}
-(Utilise le mot de passe convenu)`;
-    navigator.clipboard.writeText(txt).then(() => alert('Informations du salon copiées dans le presse-papiers !'));
-  }
-
-  function updateSyncBadge() {
-    const badge = document.getElementById('syncBadge');
-    if (onlineSession) {
-      badge.textContent = '🟢 Salon ' + onlineSession.roomCode;
-      badge.classList.remove('offline');
-    } else {
-      badge.textContent = 'Hors salon';
-      badge.classList.add('offline');
+  function renderRecentRooms() {
+    const container = document.getElementById('recentRoomsContainer');
+    const list = JSON.parse(localStorage.getItem('coneutron_recent_rooms') || '[]');
+    if (list.length === 0) {
+      container.innerHTML = '<span style="color:var(--muted);">Aucun salon récent enregistré sur cet appareil.</span>';
+      return;
     }
+    container.innerHTML = '<span style="color:var(--muted);font-weight:600;">Mes salons :</span>';
+    list.forEach(r => {
+      const chip = document.createElement('div');
+      chip.className = 'room-chip';
+      const sideLabel = r.side === 1 ? 'Bleu' : 'Rouge';
+      chip.innerHTML = `
+        <span><strong>${r.id}</strong> (${sideLabel} • ${r.date})</span>
+        <button onclick="loadRecentRoom('${r.id}', '${r.pass.replace(/'/g, "\\'")}', ${r.side})" title="Rejoindre">▶</button>
+        <button onclick="removeRecentRoom('${r.id}')" title="Supprimer">×</button>
+      `;
+      container.appendChild(chip);
+    });
   }
 
-  // --- RENDU INTERFACE ---
-  function updateUI(winReason = '') {
-    document.getElementById('scoreP1').textContent = scores[1];
-    document.getElementById('scoreP2').textContent = scores[2];
-    document.getElementById('turnCounter').textContent = `Tour ${Math.floor(history.length / 2) + 1}`;
-    document.getElementById('undoBtn').disabled = (document.getElementById('modeSelect').value === 'online' || undoStack.length === 0);
-
-    const statusText = document.getElementById('statusText');
-    const statusBar = document.getElementById('statusBar');
-
-    if (gameOver) {
-      const wName = winner === P1 ? 'Joueur 1 (Bleu)' : 'Joueur 2 (Rouge)';
-      statusText.textContent = `🏆 Victoire : ${wName}${winReason ? ' (' + winReason + ')' : ''} !`;
-      statusBar.style.borderLeftColor = winner === P1 ? 'var(--p1)' : 'var(--p2)';
-    } else {
-      const pName = turn === P1 ? 'Bleu (J1)' : 'Rouge (J2)';
-      const stepDesc = phase === 'NEUTRON'
-        ? 'déplacez le Neutron (jaune)'
-        : (isFirstTurn ? '1er tour : déplacez un pion bleu' : 'déplacez un de vos pions');
-      const waitTag = (!canLocalUserAct() && document.getElementById('modeSelect').value === 'online')
-        ? ' [En attente adversaire...]' : '';
-      statusText.textContent = `${pName} : ${stepDesc}${waitTag}`;
-      statusBar.style.borderLeftColor = turn === P1 ? 'var(--p1)' : 'var(--p2)';
+  function shareInviteLink() {
+    if (!currentRoom) return;
+    const oppSide = currentRoom.side === 1 ? 2 : 1;
+    const params = new URLSearchParams();
+    params.set('room', currentRoom.id);
+    params.set('pass', currentRoom.pass);
+    params.set('side', oppSide);
+    if (cloudConfig.provider === 'firebase' && cloudConfig.fbUrl) {
+      params.set('fb', cloudConfig.fbUrl);
+    } else if (cloudConfig.provider === 'supabase' && cloudConfig.sbUrl && cloudConfig.sbKey) {
+      params.set('sbUrl', cloudConfig.sbUrl);
+      params.set('sbKey', cloudConfig.sbKey);
     }
-
-    const histEl = document.getElementById('historyList');
-    histEl.innerHTML = history.length === 0
-      ? '<div style="color:var(--muted);text-align:center;padding:12px;">Aucun coup joué</div>'
-      : history.map((h, idx) => `<div class="hist-entry"><span>#${idx + 1}</span><span>${h.text}</span></div>`).reverse().join('');
-
-    renderBoard();
+    const inviteUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      updateStatus("🔗 Lien d'invitation copié dans le presse-papiers ! Envoyez-le à votre adversaire.");
+    }).catch(() => {
+      prompt("Copiez ce lien d'invitation :", inviteUrl);
+    });
   }
 
-  function renderBoard() {
-    const boardEl = document.getElementById('board');
-    boardEl.innerHTML = '';
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell' + ((r + c) % 2 === 1 ? ' dark' : '');
-        if (lastMove && ((lastMove.fr === r && lastMove.fc === c) || (lastMove.tr === r && lastMove.tc === c))) {
-          cell.classList.add('last-move');
-        }
-        if (cursor.r === r && cursor.c === c) cell.classList.add('cursor');
-        if (validMoves.some(([vr, vc]) => vr === r && vc === c)) cell.classList.add('valid');
-
-        cell.onclick = () => handleCellClick(r, c);
-
-        const coord = document.createElement('span');
-        coord.className = 'coord';
-        coord.textContent = coordName(r, c);
-        cell.appendChild(coord);
-
-        const val = board[r][c];
-        if (val !== EMPTY) {
-          const p = document.createElement('div');
-          p.className = 'piece ' + (val === P1 ? 'p1' : val === P2 ? 'p2' : 'neutron');
-          if (selected && selected[0] === r && selected[1] === c) p.classList.add('selected');
-          cell.appendChild(p);
-        }
-        boardEl.appendChild(cell);
-      }
+  function checkInviteUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const room = params.get('room');
+    const pass = params.get('pass');
+    const side = params.get('side');
+    if (params.get('fb')) {
+      cloudConfig = { provider: 'firebase', fbUrl: params.get('fb'), sbUrl: '', sbKey: '' };
+      localStorage.setItem('coneutron_cloud', JSON.stringify(cloudConfig));
+    } else if (params.get('sbUrl') && params.get('sbKey')) {
+      cloudConfig = { provider: 'supabase', fbUrl: '', sbUrl: params.get('sbUrl'), sbKey: params.get('sbKey') };
+      localStorage.setItem('coneutron_cloud', JSON.stringify(cloudConfig));
     }
-  }
-
-  // --- CONTRÔLES ANNEXES & CLAVIER ---
-  function toggleSound() {
-    soundEnabled = !soundEnabled;
-    document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
-  }
-  function toggleTheme() {
-    document.body.classList.toggle('light');
-  }
-  function openModal(id) {
-    if (id === 'configModal' && cloudConfig) {
-      document.getElementById('providerSelect').value = cloudConfig.provider || 'supabase';
-      document.getElementById('sbUrlInput').value = cloudConfig.sbUrl || '';
-      document.getElementById('sbKeyInput').value = cloudConfig.sbKey || '';
-      document.getElementById('fbUrlInput').value = cloudConfig.fbUrl || '';
-      toggleProviderFields();
+    if (room && pass) {
+      document.getElementById('modeSelect').value = 'online';
+      onModeChange();
+      document.getElementById('roomInput').value = room;
+      document.getElementById('passInput').value = pass;
+      if (side) document.getElementById('onlineSideSelect').value = side;
+      setTimeout(connectRoom, 200);
+      return true;
     }
-    document.getElementById(id).classList.add('open');
-  }
-  function closeModal(id) {
-    document.getElementById(id).classList.remove('open');
+    return false;
   }
 
+  // --- RACCOURCIS CLAVIER ---
   document.addEventListener('keydown', (e) => {
-    if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
-    if (e.key === 'ArrowUp') { cursor.r = (cursor.r + 4) % 5; renderBoard(); }
-    else if (e.key === 'ArrowDown') { cursor.r = (cursor.r + 1) % 5; renderBoard(); }
-    else if (e.key === 'ArrowLeft') { cursor.c = (cursor.c + 4) % 5; renderBoard(); }
-    else if (e.key === 'ArrowRight') { cursor.c = (cursor.c + 1) % 5; renderBoard(); }
-    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick(cursor.r, cursor.c); }
-    else if (e.key.toLowerCase() === 'z') undoMove();
-    else if (e.key.toLowerCase() === 'n') newGame();
-    else if (e.key.toLowerCase() === 'm') toggleSound();
-    else if (e.key.toLowerCase() === 't') toggleTheme();
-    else if (e.key.toLowerCase() === 'h') openModal('rulesModal');
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    const key = e.key.toLowerCase();
+    if (e.key === 'ArrowUp') { e.preventDefault(); cursor[0] = (cursor[0] + 4) % 5; render(); }
+    else if (e.key === 'ArrowDown') { e.preventDefault(); cursor[0] = (cursor[0] + 1) % 5; render(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); cursor[1] = (cursor[1] + 4) % 5; render(); }
+    else if (e.key === 'ArrowRight') { e.preventDefault(); cursor[1] = (cursor[1] + 1) % 5; render(); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCellClick(cursor[0], cursor[1]); }
+    else if (key === 'z') undoMove();
+    else if (key === 'n') initGame();
+    else if (key === 'm') toggleSound();
+    else if (key === 't') toggleTheme();
+    else if (key === 'f') toggleFullscreen();
+    else if (key === 'h') openModal('rulesModal');
   });
 
-  // Démarrage initial
-  onModeChange();
-  newGame(true);
+  if (!checkInviteUrl()) {
+    onModeChange();
+  }
 </script>
 </body>
 </html>
