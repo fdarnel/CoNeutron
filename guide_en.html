@@ -292,8 +292,19 @@
     <li><strong>Elastic Defense:</strong> Never leave more than two adjacent empty squares on your starting row and always keep one mobile back-rank pawn able to slide horizontally.</li>
   </ul>
 
+  <h2>4. Handling Infinite Loops and Draws</h2>
+  <div class="card">
+    <div class="card-title">Why infinite games can occur</div>
+    <p>Unlike games with captures or forward-only pawns, every slide in CoNeutron is reversible. If both players keep 3 or 4 pawns guarding their home row and refuse to open the last critical square, they can repeat a neutral back-and-forth loop indefinitely.</p>
+  </div>
+  <div class="card">
+    <div class="card-title">Draw rules applied</div>
+    <p><strong>Threefold repetition:</strong> If the exact same board configuration (positions of all 10 pawns, the Neutron, and the player to move) occurs <strong>3 times</strong> during a game, it is declared a draw.<br>
+    <strong>Mutual agreement:</strong> Human players may also agree to a draw when neither side can force a breakthrough without losing immediately.</p>
+  </div>
+
   <div class="callout-green">
-    <h2>4. Pre-Move Checklist</h2>
+    <h2>5. Pre-Move Checklist</h2>
     <ol>
       <li><strong>Immediate safety:</strong> If I place the Neutron here, can my opponent slide it onto my starting row on the next turn?</li>
       <li><strong>Two-step coupling:</strong> Which pawn will I move <em>after</em> the Neutron to shut down the opponent's counter-attack?</li>

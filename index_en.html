@@ -63,6 +63,7 @@
   button.primary:hover, .btn-link.primary:hover { background: #1d4ed8; }
   button.share-btn { background: #059669; border-color: #10b981; color: #fff; font-weight: 600; }
   button.share-btn:hover { background: #047857; }
+  button.danger-btn { background: #be123c; border-color: #f43f5e; color: #fff; font-weight: 600; }
   button:disabled { opacity: 0.45; cursor: not-allowed; }
 
   .controls-bar {
@@ -98,12 +99,21 @@
 
   .scoreboard {
     width: 100%; max-width: 860px; display: flex; justify-content: space-between;
-    align-items: center; background: var(--panel); padding: 8px 16px;
-    border-radius: 10px; margin-bottom: 12px; border: 1px solid var(--border);
-    font-weight: 600;
+    align-items: center; flex-wrap: wrap; gap: 8px; background: var(--panel);
+    padding: 8px 16px; border-radius: 10px; margin-bottom: 12px;
+    border: 1px solid var(--border); font-weight: 600;
   }
   .score-p1 { color: var(--p1); }
   .score-p2 { color: var(--p2); }
+  .score-draw { color: var(--neutron); font-size: 0.92rem; }
+
+  .draw-banner {
+    width: 100%; max-width: 860px; background: var(--panel-alt);
+    border: 1px solid var(--neutron); border-radius: 10px; padding: 10px 14px;
+    margin-bottom: 12px; display: none; justify-content: center;
+    align-items: center; flex-wrap: wrap; gap: 10px; font-weight: 600;
+  }
+  .draw-banner.active { display: flex; }
 
   @keyframes turnPulse {
     0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.65); }
@@ -208,7 +218,6 @@
     display: flex; justify-content: space-between;
   }
 
-  /* Footer */
   .site-footer {
     width: 100%; max-width: 860px; margin-top: 20px; padding: 12px 16px;
     background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
@@ -218,7 +227,6 @@
   .site-footer a { color: var(--p1); text-decoration: none; font-weight: 600; }
   .site-footer a:hover { text-decoration: underline; }
 
-  /* Modals */
   .modal-backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,0.65);
     display: none; align-items: center; justify-content: center; z-index: 50; padding: 16px;
@@ -295,6 +303,7 @@
   </select>
 
   <button id="undoBtn" onclick="undoMove()" title="Undo last turn (Z)">↩ Undo</button>
+  <button id="drawBtn" onclick="handleDrawClick()" title="Offer or declare a draw">🤝 Draw</button>
   <button id="newGameBtn" class="primary" onclick="handleNewGameClick()" title="New Game (N)">New Game</button>
 </div>
 
@@ -315,8 +324,15 @@
 
 <div class="scoreboard">
   <span class="score-p1">Blue (P1): <span id="scoreP1">0</span></span>
+  <span class="score-draw">Draws: <span id="scoreDraw">0</span></span>
   <button onclick="resetScores()" style="padding: 4px 10px; font-size: 0.8rem;">Reset Scores</button>
   <span class="score-p2">Red (P2): <span id="scoreP2">0</span></span>
+</div>
+
+<div class="draw-banner" id="drawBanner">
+  <span>🤝 Your opponent offers a draw by mutual agreement.</span>
+  <button class="share-btn" onclick="respondDrawOffer(true)">✅ Accept</button>
+  <button class="danger-btn" onclick="respondDrawOffer(false)">❌ Decline</button>
 </div>
 
 <div class="status" id="status">Initializing...</div>
@@ -351,7 +367,7 @@
     <a href="https://www.solipsys.co.uk/new/CoNeutron.html" target="_blank" rel="noopener noreferrer">Official Game Page</a>
   </div>
   <div>
-    <a href="guide_en.html" target="_blank" rel="noopener noreferrer" class="btn-link">📄 Open Full Guide (Web / PDF)</a>
+    <a href="guide_en.html" target="_blank" rel="noopener noreferrer">📄 Open Full Strategy Guide (Web / Printable to PDF)</a>
   </div>
 </footer>
 
@@ -364,6 +380,7 @@
     <p><strong>3. Two-Step Turn:</strong> On each turn, you must first move the <strong>Neutron</strong>, and then move one of <strong>your own pawns</strong>.</p>
     <p><strong>4. First-Turn Exception:</strong> On the very first turn of the game, Blue moves only one Blue pawn (without moving the Neutron).</p>
     <p><strong>5. Stalemate Loss:</strong> If a player cannot legally move the Neutron or any of their pawns during their turn, they immediately lose the game.</p>
+    <p><strong>6. Draws (Infinite Loops):</strong> If the exact same board configuration (positions of all pieces and player to move) occurs <strong>3 times</strong>, the game is declared a draw (threefold repetition). Players may also agree to a <strong>draw by mutual agreement</strong> using the 🤝 Draw button.</p>
     <div class="modal-actions">
       <button onclick="closeModal('rulesModal');openModal('strategyModal')">🎓 Strategy Guide</button>
       <button class="primary" onclick="closeModal('rulesModal')">Got it</button>
@@ -399,12 +416,12 @@
       <strong>Tip vs. Hard AI:</strong> Avoid advancing both wings (A1→A4 and E1→E4) too early; the AI will exploit your empty back rank.
     </div>
 
-    <h3>3. Advanced Tactics &amp; Checklist</h3>
+    <h3>3. Advanced Tactics &amp; Endgame</h3>
     <ul>
       <li><strong>Double Threat (Fork):</strong> Place the Neutron on a square with two clear sightlines to the opponent's back rank (e.g., a file and a diagonal).</li>
       <li><strong>Bumper Pawn:</strong> Infiltrate a pawn onto the opponent's back rank (e.g. C5) so it acts as a stopping block for the Neutron on an adjacent empty square.</li>
       <li><strong>Tempo Trap (Zugzwang):</strong> Leave an enticing lane to an edge (e.g. A2/E2) where your pawn waits to bounce the Neutron diagonally back toward their goal.</li>
-      <li><strong>Elastic Defense:</strong> Never leave more than two adjacent empty squares on your starting row and keep a mobile back-rank defender.</li>
+      <li><strong>Handling Deadlocks (Draws):</strong> In locked positions where neither side can open a line safely, trigger threefold repetition or agree to a draw.</li>
     </ul>
     <p><strong>Pre-move checklist:</strong> 1) Can my opponent win next turn? 2) Which pawn will I move right after the Neutron? 3) Does this open a diagonal toward their goal?</p>
 
@@ -477,21 +494,24 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
   let selected = null;
   let validMoves = [];
   let gameOver = false;
+  let gameWinner = 0;
+  let winReason = "";
+  let drawReason = "";
+  let drawOffer = null;
+  let positionCounts = {};
   let mode = 'ai';
   let humanSide = P1;
-  let scores = { 1: 0, 2: 0 };
+  let scores = { 1: 0, 2: 0, 0: 0 };
   let moveHistory = [];
   let undoStack = [];
   let lastMove = null;
   let cursor = [2, 2];
   let isAnimating = false;
 
-  // Audio & Notifications
   let soundEnabled = true;
   let audioCtx = null;
   let titleBlinkTimer = null;
 
-  // Online state
   let cloudConfig = JSON.parse(localStorage.getItem('coneutron_cloud') || '{"provider":"firebase","fbUrl":"","sbUrl":"","sbKey":""}');
   let currentRoom = null;
   let pollTimer = null;
@@ -548,7 +568,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     if (!document.hidden) stopTitleBlink();
   });
 
-  function triggerMyTurnNotification() {
+  function triggerMyTurnNotification(msg = "It's your turn to play!") {
     const statusEl = document.getElementById('status');
     statusEl.classList.remove('turn-alert');
     void statusEl.offsetWidth;
@@ -561,10 +581,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
     if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
       try {
-        new Notification("CoNeutron", {
-          body: "It's your turn to play!",
-          tag: "coneutron-turn"
-        });
+        new Notification("CoNeutron", { body: msg, tag: "coneutron-turn" });
       } catch (_) {}
     }
   }
@@ -632,6 +649,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     } else {
       renderRecentRooms();
       updateNewGameButton();
+      updateDrawUI();
       updateStatus("Online Mode: create or join a room above.");
     }
   }
@@ -647,11 +665,15 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
   function updateNewGameButton() {
     const btn = document.getElementById('newGameBtn');
-    if (mode === 'online' && currentRoom && gameOver) {
-      btn.textContent = "🏆 Rematch";
-    } else {
-      btn.textContent = "New Game";
-    }
+    btn.textContent = (mode === 'online' && currentRoom && gameOver) ? "🏆 Rematch" : "New Game";
+  }
+
+  function getPositionKeyFor(b, t, ph) {
+    return `${b.map(r => r.join('')).join('')}|${t}|${ph}`;
+  }
+
+  function getPositionKey() {
+    return getPositionKeyFor(board, turn, phase);
   }
 
   function initGame(skipSync = false) {
@@ -671,11 +693,19 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     selected = null;
     validMoves = [];
     gameOver = false;
+    gameWinner = 0;
+    winReason = "";
+    drawReason = "";
+    drawOffer = null;
     moveHistory = [];
     undoStack = [];
     lastMove = null;
+    positionCounts = {};
+    positionCounts[getPositionKey()] = 1;
+
     updateUndoBtn();
     updateNewGameButton();
+    updateDrawUI();
     renderHistory();
     updateStatus();
     render();
@@ -776,7 +806,12 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       isFirstTurn,
       moveHistory: [...moveHistory],
       lastMove: lastMove ? [...lastMove] : null,
-      scores: { ...scores }
+      scores: { ...scores },
+      positionCounts: { ...positionCounts },
+      drawOffer,
+      drawReason,
+      gameWinner,
+      winReason
     });
     updateUndoBtn();
   }
@@ -795,6 +830,11 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     moveHistory = snap.moveHistory;
     lastMove = snap.lastMove;
     scores = snap.scores;
+    positionCounts = snap.positionCounts || {};
+    drawOffer = snap.drawOffer || null;
+    drawReason = snap.drawReason || "";
+    gameWinner = snap.gameWinner || 0;
+    winReason = snap.winReason || "";
     gameOver = false;
     selected = null;
     validMoves = [];
@@ -807,6 +847,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     updateScoreDisplay();
     updateUndoBtn();
     updateNewGameButton();
+    updateDrawUI();
     renderHistory();
     updateStatus();
     render();
@@ -814,6 +855,83 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
   function updateUndoBtn() {
     document.getElementById('undoBtn').disabled = (undoStack.length === 0 || mode === 'online');
+  }
+
+  function handleDrawClick() {
+    if (gameOver || isAnimating) return;
+    if (mode === 'pvp') {
+      if (confirm("Declare the game a draw by mutual agreement?")) {
+        saveUndoSnapshot();
+        endDraw("mutual agreement");
+      }
+    } else if (mode === 'ai') {
+      const aiSide = humanSide === P1 ? P2 : P1;
+      const aiEval = evaluateBoard(board, aiSide);
+      if (aiEval <= 15) {
+        saveUndoSnapshot();
+        endDraw("mutual agreement with AI");
+      } else {
+        updateStatus("🤖 AI declines the draw offer and continues playing.");
+      }
+    } else if (mode === 'online') {
+      if (!currentRoom) return;
+      if (drawOffer === currentRoom.side) {
+        drawOffer = null;
+        updateDrawUI();
+        updateStatus();
+        pushOnlineState();
+      } else if (drawOffer && drawOffer !== currentRoom.side) {
+        respondDrawOffer(true);
+      } else {
+        drawOffer = currentRoom.side;
+        updateDrawUI();
+        updateStatus("🤝 Draw offer sent to your opponent.");
+        pushOnlineState();
+      }
+    }
+  }
+
+  function respondDrawOffer(accept) {
+    if (!currentRoom || gameOver) return;
+    if (accept) {
+      drawOffer = null;
+      endDraw("mutual agreement");
+      pushOnlineState();
+    } else {
+      drawOffer = null;
+      updateDrawUI();
+      updateStatus("Draw offer declined.");
+      pushOnlineState();
+    }
+  }
+
+  function updateDrawUI() {
+    const drawBtn = document.getElementById('drawBtn');
+    const banner = document.getElementById('drawBanner');
+
+    if (gameOver || (mode === 'online' && !currentRoom)) {
+      drawBtn.disabled = true;
+      drawBtn.textContent = "🤝 Draw";
+      banner.classList.remove('active');
+      return;
+    }
+
+    drawBtn.disabled = false;
+    if (mode === 'online' && currentRoom) {
+      if (drawOffer === currentRoom.side) {
+        drawBtn.textContent = "⏳ Cancel Draw";
+        banner.classList.remove('active');
+      } else if (drawOffer && drawOffer !== currentRoom.side) {
+        drawBtn.textContent = "🤝 Accept Draw";
+        banner.classList.add('active');
+      } else {
+        drawBtn.textContent = "🤝 Draw";
+        banner.classList.remove('active');
+      }
+    } else {
+      drawBtn.textContent = "🤝 Draw";
+      banner.classList.remove('active');
+    }
   }
 
   function animateAndExecute(fr, fc, tr, tc, callback) {
@@ -865,6 +983,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     selected = null;
     validMoves = [];
     lastMove = [fr, fc, tr, tc];
+    drawOffer = null;
 
     const label = piece === NEUTRON ? 'Neutron' : (turn === P1 ? 'Blue' : 'Red');
     moveHistory.push({
@@ -898,12 +1017,22 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
         if (mode === 'online' && currentRoom) pushOnlineState();
         return;
       }
+
+      const posKey = getPositionKey();
+      positionCounts[posKey] = (positionCounts[posKey] || 0) + 1;
+      if (positionCounts[posKey] >= 3) {
+        endDraw("threefold repetition");
+        if (mode === 'online' && currentRoom) pushOnlineState();
+        return;
+      }
+
       if (canLocalPlayerAct()) {
         selected = [nr, nc];
         validMoves = nMoves;
       }
     }
 
+    updateDrawUI();
     updateStatus();
     render();
 
@@ -916,28 +1045,50 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
   function endGame(winner, reason = "") {
     gameOver = true;
+    gameWinner = winner;
+    winReason = reason;
+    drawReason = "";
+    drawOffer = null;
     selected = null;
     validMoves = [];
-    scores[winner]++;
+    scores[winner] = (scores[winner] || 0) + 1;
     updateScoreDisplay();
     updateNewGameButton();
+    updateDrawUI();
+    stopTitleBlink();
     playTone(winner === P1 ? 587 : 440, 0.15);
     setTimeout(() => playTone(winner === P1 ? 784 : 554, 0.3), 160);
+    updateStatus();
+    render();
+  }
 
-    const name = winner === P1 ? "Blue (P1)" : "Red (P2)";
-    const statusEl = document.getElementById('status');
-    statusEl.textContent = `🏆 Winner: ${name} ${reason ? `(${reason})` : ''}!`;
-    statusEl.style.borderLeftColor = winner === P1 ? 'var(--p1)' : 'var(--p2)';
+  function endDraw(reason = "") {
+    gameOver = true;
+    gameWinner = 0;
+    winReason = "";
+    drawReason = reason;
+    drawOffer = null;
+    selected = null;
+    validMoves = [];
+    scores[0] = (scores[0] || 0) + 1;
+    updateScoreDisplay();
+    updateNewGameButton();
+    updateDrawUI();
+    stopTitleBlink();
+    playTone(440, 0.14);
+    setTimeout(() => playTone(440, 0.24), 160);
+    updateStatus();
     render();
   }
 
   function updateScoreDisplay() {
-    document.getElementById('scoreP1').textContent = scores[1];
-    document.getElementById('scoreP2').textContent = scores[2];
+    document.getElementById('scoreP1').textContent = scores[1] || 0;
+    document.getElementById('scoreP2').textContent = scores[2] || 0;
+    document.getElementById('scoreDraw').textContent = scores[0] || 0;
   }
 
   function resetScores() {
-    scores = { 1: 0, 2: 0 };
+    scores = { 1: 0, 2: 0, 0: 0 };
     updateScoreDisplay();
     if (mode === 'online' && currentRoom) pushOnlineState();
   }
@@ -949,10 +1100,15 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       return;
     }
     if (gameOver) {
-      const winner = checkWin(board) || (turn === P1 ? P2 : P1);
-      const winName = winner === P1 ? "Blue (P1)" : "Red (P2)";
-      statusEl.textContent = `🏆 Winner: ${winName}!`;
-      statusEl.style.borderLeftColor = winner === P1 ? 'var(--p1)' : 'var(--p2)';
+      if (drawReason) {
+        statusEl.textContent = `🤝 Draw (${drawReason})!`;
+        statusEl.style.borderLeftColor = 'var(--neutron)';
+      } else {
+        const w = gameWinner || checkWin(board) || (turn === P1 ? P2 : P1);
+        const winName = w === P1 ? "Blue (P1)" : "Red (P2)";
+        statusEl.textContent = `🏆 Winner: ${winName}${winReason ? ` (${winReason})` : ''}!`;
+        statusEl.style.borderLeftColor = w === P1 ? 'var(--p1)' : 'var(--p2)';
+      }
       return;
     }
     const name = turn === P1 ? "Blue (P1)" : "Red (P2)";
@@ -965,7 +1121,9 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     const action = phase === 'NEUTRON'
       ? "move the Neutron (yellow)"
       : (isFirstTurn ? "1st turn: move a pawn" : "move one of your pawns");
-    statusEl.textContent = `${name}${suffix}: ${action}`;
+    const repCount = positionCounts[getPositionKey()] || 0;
+    const repNote = (repCount === 2 && phase === 'NEUTRON') ? " • ⚠️ Position repeated 2×" : "";
+    statusEl.textContent = `${name}${suffix}: ${action}${repNote}`;
     statusEl.style.borderLeftColor = turn === P1 ? 'var(--p1)' : 'var(--p2)';
   }
 
@@ -1132,7 +1290,11 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     let bestAct = actions[0];
     let bestScore = -Infinity;
     for (const act of actions) {
-      const score = minimax(act.board, depth, -Infinity, Infinity, false, aiSide);
+      let score = minimax(act.board, depth, -Infinity, Infinity, false, aiSide);
+      const nextKey = getPositionKeyFor(act.board, humanSide, 'NEUTRON');
+      if ((positionCounts[nextKey] || 0) >= 2 && checkWin(act.board) === 0) {
+        score = 0;
+      }
       if (score > bestScore) {
         bestScore = score;
         bestAct = act;
@@ -1156,7 +1318,8 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
   function serializeState() {
     return {
-      board, turn, phase, isFirstTurn, gameOver, scores, moveHistory, lastMove,
+      board, turn, phase, isFirstTurn, gameOver, gameWinner, winReason,
+      drawReason, drawOffer, positionCounts, scores, moveHistory, lastMove,
       updatedAt: Date.now()
     };
   }
@@ -1170,13 +1333,20 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     const prevTurn = turn;
     const prevGameOver = gameOver;
     const prevMoveCount = moveHistory.length;
+    const prevDrawOffer = drawOffer;
 
     board = state.board;
     turn = state.turn;
     phase = state.phase;
     isFirstTurn = state.isFirstTurn;
     gameOver = state.gameOver;
-    scores = state.scores || { 1: 0, 2: 0 };
+    gameWinner = state.gameWinner || 0;
+    winReason = state.winReason || "";
+    drawReason = state.drawReason || "";
+    drawOffer = state.drawOffer || null;
+    positionCounts = state.positionCounts || {};
+    scores = state.scores || { 1: 0, 2: 0, 0: 0 };
+    if (scores[0] === undefined) scores[0] = 0;
     moveHistory = state.moveHistory || [];
     lastMove = state.lastMove || null;
     selected = null;
@@ -1190,6 +1360,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
 
     updateScoreDisplay();
     updateNewGameButton();
+    updateDrawUI();
     renderHistory();
     updateStatus();
     render();
@@ -1201,11 +1372,13 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       (moveHistory.length === 0 && prevMoveCount > 0)
     );
 
-    if (becameMyTurn) {
+    if (drawOffer && currentRoom && drawOffer !== currentRoom.side && prevDrawOffer !== drawOffer) {
+      triggerMyTurnNotification("Your opponent is offering a draw!");
+    } else if (becameMyTurn) {
       triggerMyTurnNotification();
     } else if (!prevGameOver && gameOver) {
       playTone(440, 0.15);
-      setTimeout(() => playTone(554, 0.28), 160);
+      setTimeout(() => playTone(drawReason ? 440 : 554, 0.28), 160);
       stopTitleBlink();
     } else {
       playTone(660, 0.06);
@@ -1265,6 +1438,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
       startListeningRoom();
       updateUndoBtn();
       updateNewGameButton();
+      updateDrawUI();
       updateStatus();
       render();
     } catch (err) {
@@ -1285,6 +1459,7 @@ create policy "public_access" on coneutron_rooms for all using (true) with check
     badge.textContent = "Offline";
     badge.classList.remove('connected');
     updateNewGameButton();
+    updateDrawUI();
   }
 
   async function fetchRemoteRoom(roomId) {
